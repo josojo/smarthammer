@@ -1,0 +1,9 @@
+[MESSAGES CONTROL]
+disable=missing-docstring
+
+[TYPING]
+py-version = 3.10
+runtime-typing = true
+
+[MESSAGES CONTROL]
+enable=typing  # Enable typing checks 
