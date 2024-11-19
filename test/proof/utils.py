@@ -1,6 +1,7 @@
 import unittest
 from hammer.proof.utils import unicode_escape
 
+
 class TestUnicodeEscape(unittest.TestCase):
     def test_ascii_characters(self):
         # Test with basic ASCII characters
@@ -21,5 +22,6 @@ class TestUnicodeEscape(unittest.TestCase):
         # Test with empty string
         self.assertEqual(unicode_escape(""), "")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

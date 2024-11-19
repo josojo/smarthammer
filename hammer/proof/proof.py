@@ -1,12 +1,9 @@
-
-
 from .utils import extract_lean_blocks, unicode_escape
-
-
 
 
 class Hypothesis:
     """Represents a mathematical hypothesis with its name, statement, and proof."""
+
     def __init__(self, name, hypothesis, proof):
         self.name = name
         self.hypothesis = hypothesis
@@ -15,6 +12,7 @@ class Hypothesis:
     def add_proof(self, proof):
         """Add or update the proof for this hypothesis."""
         self.proof = proof
+
 
 class ProofSearchState:
     def __init__(self, name, hypotheses, goal, nl_proof=None):
@@ -31,9 +29,11 @@ class ProofSearchState:
 
     def __str__(self):
         return f"{self.name}: {self.proof}"
-    
+
     def add_hypotheses(self, claude_client, verbose=False):
-        prompt_part_1 = f"You are a math expert and you want to proof the following lean theorem:" 
+        prompt_part_1 = (
+            f"You are a math expert and you want to proof the following lean theorem:"
+        )
         prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.original_hypotheses) + ' '.join(self.proven_hypotheses)} : \n {self.goal} ```."
         prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block."
         examples = """Examples:
@@ -50,17 +50,20 @@ class ProofSearchState:
            Writing f (n) = Mn + K for arbitrary constants M and K, we and putting into the equations, we get M =2 and K = f (0).
            Lean4 hypotheses:  ```lean ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, ```lean ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, ```lean ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, ```lean ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
         """
-        response = claude_client.send(prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose)
+        response = claude_client.send(
+            prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
+        )
         hypotheses = extract_lean_blocks(response)
-        print("extracted hy",hypotheses)
+        print("extracted hy", hypotheses)
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
         self.theoretical_hypotheses.extend(hypotheses)
 
-
-    def generate_proof_candidate_for_hypotheses(self, claude_client, number_of_hypotheses, starting_code, verbose=False):
+    def generate_proof_candidate_for_hypotheses(
+        self, claude_client, number_of_hypotheses, starting_code, verbose=False
+    ):
         assert number_of_hypotheses < len(self.theoretical_hypotheses)
-        prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:" 
+        prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:"
         prompt_part_2 = f"```lean\n {self.name} {' '.join(self.original_hypotheses)+ ' '.join(self.proven_hypotheses)} : \n {self.theoretical_hypotheses[number_of_hypotheses]} := by\n {starting_code}```."
         prompt_part_3 = f"Complete the proof and put it into ```lean ``` block."
         examples = """Examples:
@@ -91,26 +94,34 @@ class ProofSearchState:
         """
         total_prompt = prompt_part_1 + prompt_part_2 + prompt_part_3 + examples
         response = claude_client.send(total_prompt, verbose)
+        print("response", response)
         proof = extract_lean_blocks(response)[0]
         if verbose:
             print(f"Proof candidate for {number_of_hypotheses} hypotheses: {proof}")
         return proof
-    
+
     def set_proof(self, proof):
         self.proof = proof
 
     def hypothesis_as_code(self, hypothesis_number: int) -> str:
         """
         Returns the hypothesis as Lean code for a given hypothesis number.
-        
+
         Args:
             proof_state: The proof search state
             hypothesis_number: The index of the hypothesis to return
-            
+
         Returns:
             The hypothesis as Lean code
         """
-        goal = "\n".join([line for line in self.theoretical_hypotheses[hypothesis_number].split("\n") if not line.strip().startswith("--")])
+        goal = "\n".join(
+            [
+                line
+                for line in self.theoretical_hypotheses[hypothesis_number].split("\n")
+                if not line.strip().startswith("--")
+            ]
+        )
         code = f"{self.name} {' '.join(self.original_hypotheses)+ ' '.join(self.proven_hypotheses)} : \n {goal} := by\n"
         code = unicode_escape(code)
+        goal = unicode_escape(goal)
         return code

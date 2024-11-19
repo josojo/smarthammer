@@ -5,12 +5,12 @@ import pexpect
 from dotenv import load_dotenv
 
 
-
 class LeanServer:
     """Server class for managing interactions with a Lean REPL instance."""
+
     def __init__(self, initiate_mathlib=False):
         load_dotenv()
-        path_to_repl = os.getenv('REPLPATH')
+        path_to_repl = os.getenv("REPLPATH")
         if not path_to_repl:
             raise ValueError("REPLPATH environment variable not set in .env file")
 
@@ -21,7 +21,6 @@ class LeanServer:
             # setup the mathlib import, as this takes the longest in any simulation
             # and is "always" needed
             self.run_code("import Mathlib")
-
 
     def run_code(self, code, env=None, verbose=False):
         """Execute Lean code in the REPL.
@@ -38,10 +37,9 @@ class LeanServer:
             pexpect.exceptions.TIMEOUT: If REPL response times out
         """
         if env is not None:
-            command = json.dumps({
-                "cmd": code,
-                "env": env
-            })  # [1:-1] removes single quotes
+            command = json.dumps(
+                {"cmd": code, "env": env}
+            )  # [1:-1] removes single quotes
         else:
             command = (
                 '{ "cmd" : "' + repr(code)[1:-1] + '" }'

@@ -1,20 +1,25 @@
 import sys
 from pathlib import Path
-from lean_server.server import LeanServer
-from proof.proof import ProofSearchState
-from api.claude.client import Client
-from proof.proof import Hypothesis
+
+# from lean.server import LeanServer
+from hammer.lean.server import LeanServer
+from hammer.proof.proof import ProofSearchState, Hypothesis
+from hammer.api.claude.client import Client
 
 
-def iterate_until_valid_proof(proof_state: ProofSearchState, hyptotheses_number, client: Client, lean_client: LeanServer, max_iteration=1, verbose=False):
+def iterate_until_valid_proof(
+    proof_state: ProofSearchState,
+    hyptotheses_number,
+    client: Client,
+    lean_client: LeanServer,
+    max_iteration=1,
+    verbose=False,
+):
     cnt = 0
     starting_code = ""
-    while (cnt < max_iteration):
+    while cnt < max_iteration:
         proof_candidate = proof_state.generate_proof_candidate_for_hypotheses(
-            client, 
-            hyptotheses_number,
-            starting_code,
-            verbose
+            client, hyptotheses_number, starting_code, verbose
         )
         if proof_candidate:
             code = proof_state.hypothesis_as_code(hyptotheses_number) + proof_candidate
@@ -29,36 +34,30 @@ def iterate_until_valid_proof(proof_state: ProofSearchState, hyptotheses_number,
     return None
 
 
-def prove_theorem(name: str, hypotheses: list[str], goal: str, verbose=False) -> ProofSearchState:
-    """
-    Attempts to prove a theorem using the ProofSearchState.
-    
-    Args:
-        name: Name of the theorem
-        hypothesis: List of hypothesis statements
-        goal: The goal to prove
-        
-    Returns:
-        ProofSearchState containing the proof attempt
-    """
-    lean_client = LeanServer()
-    
-    # Create proof search state
-    proof_state = ProofSearchState(name, hypotheses, goal)
-
-    claude_client = Client()
-    
-    # Generate and test hypotheses
-    proof_state.add_hypotheses(claude_client, verbose)
+def prove_theorem_via_hypotheses_search(
+    proof_state: ProofSearchState,
+    api_client: Client,
+    lean_client: LeanServer,
+    verbose=False,
+):
+    proof_state.add_hypotheses(api_client, verbose)
     print("Added hypotheses")
     print(proof_state.theoretical_hypotheses)
-    
+
     # Try to generate proofs for different numbers of hypotheses
     valid_proofs = []
     for i in range(len(proof_state.theoretical_hypotheses)):
-        proof = iterate_until_valid_proof(proof_state, i, claude_client, lean_client, 1, verbose)
+        proof = iterate_until_valid_proof(
+            proof_state, i, api_client, lean_client, 1, verbose
+        )
         if proof:
-            proof_state.proven_hypotheses.append(Hypothesis( "p"+len(proof_state.proven_hypotheses), proof_state.theoretical_hypotheses[i], proof))
+            proof_state.proven_hypotheses.append(
+                Hypothesis(
+                    "p" + len(proof_state.proven_hypotheses),
+                    proof_state.theoretical_hypotheses[i],
+                    proof,
+                )
+            )
             valid_proofs.append(i)
     # Remove the valid proofs from the list
     valid_proofs.reverse()
@@ -66,9 +65,33 @@ def prove_theorem(name: str, hypotheses: list[str], goal: str, verbose=False) ->
         proof_state.theoretical_hypotheses.pop(i)
     return proof_state
 
+
+def prove_theorem(
+    name: str, hypotheses: list[str], goal: str, verbose=False
+) -> ProofSearchState:
+    """
+    Attempts to prove a theorem using the ProofSearchState.
+
+    Args:
+        name: Name of the theorem
+        hypothesis: List of hypothesis statements
+        goal: The goal to prove
+
+    Returns:
+        ProofSearchState containing the proof attempt
+    """
+    lean_client = LeanServer()
+    proof_state = ProofSearchState(name, hypotheses, goal)
+    claude_client = Client()
+
+    prove_theorem_via_hypotheses_search(
+        proof_state, claude_client, lean_client, verbose
+    )
+
+
 def main(name, hypothesis, goal):
     """Main entry point for the theorem prover."""
-    
+
     try:
         proof_state = prove_theorem(name, hypothesis, goal, True)
         if proof_state.proof:
@@ -79,6 +102,7 @@ def main(name, hypothesis, goal):
     except Exception as e:
         print(f"Error while proving theorem: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     name = "p1"
