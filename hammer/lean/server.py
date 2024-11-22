@@ -45,10 +45,13 @@ class LeanServer:
                 '{ "cmd" : "' + repr(code)[1:-1] + '" }'
             )  # [1:-1] removes single quotes
 
-        if verbose:
-            print("sending the following command", command)
-        self.proc.sendline(command)
-        self.proc.expect_exact(command + "\r\n")
+        command_array = command.split("\\n")
+        print("command_array", command_array)
+        for command in command_array:
+            if verbose:
+                print("sending the following command", command)
+            self.proc.sendline(command)
+            self.proc.expect_exact(command + "\r\n")
         self.proc.sendline()
         self.proc.expect_exact("\r\n")
         try:
