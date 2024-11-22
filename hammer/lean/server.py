@@ -38,24 +38,24 @@ class LeanServer:
         """
         if env is not None:
             command = json.dumps(
-                {"cmd": code, "env": env}
-            )  # [1:-1] removes single quotes
+                {"cmd": code, "env": env},
+            ).replace("\\\\", "\\")  # [1:-1] removes single quotes
         else:
             command = (
                 '{ "cmd" : "' + repr(code)[1:-1] + '" }'
             )  # [1:-1] removes single quotes
 
         if verbose:
-            print(command)
+            print("sending the following command", command)
         self.proc.sendline(command)
         self.proc.expect_exact(command + "\r\n")
         self.proc.sendline()
         self.proc.expect_exact("\r\n")
         try:
-            self.proc.expect(r'env": \d+\}', timeout=200)
+            self.proc.expect(r'env": \d+\}', timeout=300)
             output = self.proc.before + self.proc.match.group()
             if verbose:
-                print(output)
+                print("Receiving the following output", output)
             return json.loads(output)
         except pexpect.exceptions.TIMEOUT:
             raise pexpect.exceptions.TIMEOUT

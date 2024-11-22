@@ -1,5 +1,9 @@
 # C extensions
 *.so
+# Python bytecode
+**/__pycache__/
+*.py[cod]
+*$py.class
 
 # Distribution / packaging
 .Python

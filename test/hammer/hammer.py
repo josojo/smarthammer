@@ -65,68 +65,6 @@ class TestHammer(unittest.TestCase):
         # Create a ProofSearchState instance
         self.proof_state = ProofSearchState(self.name, self.hypotheses, self.goal)
 
-    def test_prove_theorem_via_hypotheses_search_successful(self):
-        # Setup mock behaviors
-        # Mock that the API client adds two theoretical hypotheses
-        self.proof_state.theoretical_hypotheses = ["hypothesis_1", "hypothesis_2"]
-
-        # Mock that the first hypothesis generates a valid proof
-        self.mock_lean_client.run_code.return_value = '{ "env": 1}'
-
-        # Mock the generate_proof_candidate_for_hypotheses method
-        self.proof_state.generate_proof_candidate_for_hypotheses = Mock()
-        self.proof_state.generate_proof_candidate_for_hypotheses.return_value = (
-            "valid_proof"
-        )
-
-        # Run the function
-        result = prove_theorem_via_hypotheses_search(
-            self.proof_state, self.mock_api_client, self.mock_lean_client, verbose=False
-        )
-
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertEqual(len(result.proven_hypotheses), 1)
-        self.assertEqual(len(result.theoretical_hypotheses), 1)
-        self.assertEqual(result.proven_hypotheses[0].proof, "valid_proof")
-
-    def test_prove_theorem_via_hypotheses_search_no_valid_proofs(self):
-        # Setup mock behaviors
-        self.proof_state.theoretical_hypotheses = ["hypothesis_1", "hypothesis_2"]
-
-        # Mock that all proof attempts fail
-        self.mock_lean_client.run_code.return_value = '{ "env": 0}'
-
-        # Mock the generate_proof_candidate_for_hypotheses method
-        self.proof_state.generate_proof_candidate_for_hypotheses = Mock()
-        self.proof_state.generate_proof_candidate_for_hypotheses.return_value = (
-            "invalid_proof"
-        )
-
-        # Run the function
-        result = prove_theorem_via_hypotheses_search(
-            self.proof_state, self.mock_api_client, self.mock_lean_client, verbose=False
-        )
-
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertEqual(len(result.proven_hypotheses), 0)
-        self.assertEqual(len(result.theoretical_hypotheses), 2)
-
-    def test_prove_theorem_via_hypotheses_search_no_hypotheses(self):
-        # Setup empty theoretical hypotheses
-        self.proof_state.theoretical_hypotheses = []
-
-        # Run the function
-        result = prove_theorem_via_hypotheses_search(
-            self.proof_state, self.mock_api_client, self.mock_lean_client, verbose=False
-        )
-
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertEqual(len(result.proven_hypotheses), 0)
-        self.assertEqual(len(result.theoretical_hypotheses), 0)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,6 +3,7 @@ def unicode_escape(input_str):
     Converts all non-ASCII characters in the input string to their Unicode escape sequences.
     """
     out_str = input_str.encode("unicode_escape").decode("ascii")
+    return out_str
 
 
 def extract_lean_blocks(text: str) -> list[str]:
