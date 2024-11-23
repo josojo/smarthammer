@@ -1,8 +1,8 @@
 # Smart Hammer
 
-This repo contains the code to run a smart hammer that tries to prove lean code. 
+This repo contains code for a smart hammer that tries to prove Lean code.
 
-The main idea of this code is to create a for any theorem to prove many hypthesis and substatements, that we then either find true or false. We will continue adding new hpythesis and substatements, until a proof becomes obvious from the hypthesises.
+The main idea of this code is to create, for any theorem, many hypotheses and substatements that we then either prove true or false. We will continue adding new hypotheses and substatements until a proof becomes obvious from the hypotheses.
 
 Current performance against miniF2F:
 
