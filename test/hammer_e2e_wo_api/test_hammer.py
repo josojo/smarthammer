@@ -116,7 +116,17 @@ exact h5
         proof_state = ProofSearchState(name, hypotheses, goal)
 
         # Create mock clients
-        client = Client([api_output_1, api_output_2, api_output_3, api_output_3, api_output_4, api_output_5, final_proof_api_output])
+        client = Client(
+            [
+                api_output_1,
+                api_output_2,
+                api_output_3,
+                api_output_3,
+                api_output_4,
+                api_output_5,
+                final_proof_api_output,
+            ]
+        )
 
         prove_theorem_via_hypotheses_search(
             proof_state, client, self.lean_client, verbose=True
@@ -126,14 +136,20 @@ exact h5
             print(x)
             print("\n")
             print(x.proof)
-        final_proof_with_hypotheses = find_final_proof(proof_state, client, self.lean_client, 1, verbose=True)
+        final_proof_with_hypotheses = find_final_proof(
+            proof_state, client, self.lean_client, 1, verbose=True
+        )
         result = self.lean_client.run_code(final_proof_with_hypotheses, 0, True)
-        if not (isinstance(result, dict) and (
-            "messages" not in result or 
-            not any(msg.get("severity") == "error" for msg in result.get("messages", []))
-        )):
-                assert 2 == 1
-
+        if not (
+            isinstance(result, dict)
+            and (
+                "messages" not in result
+                or not any(
+                    msg.get("severity") == "error" for msg in result.get("messages", [])
+                )
+            )
+        ):
+            assert 2 == 1
 
 
 if __name__ == "__main__":

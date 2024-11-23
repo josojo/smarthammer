@@ -22,8 +22,10 @@ def iterate_until_valid_proof(
             code = proof_state.hypothesis_as_code(hyptotheses_number) + proof_candidate
             result = lean_client.run_code(code, 0, verbose)
             if isinstance(result, dict) and (
-                "messages" not in result or 
-                not any(msg.get("severity") == "error" for msg in result.get("messages", []))
+                "messages" not in result
+                or not any(
+                    msg.get("severity") == "error" for msg in result.get("messages", [])
+                )
             ):
                 return proof_candidate
             else:
@@ -31,6 +33,7 @@ def iterate_until_valid_proof(
                 print(f"Proof candidate {proof_candidate} failed")
         cnt += 1
     return None
+
 
 def iterate_until_valid_final_proof(
     proof_state: ProofSearchState,
@@ -49,8 +52,10 @@ def iterate_until_valid_final_proof(
             code = proof_state.get_theorem_code() + proof_candidate
             result = lean_client.run_code(code, 0, verbose)
             if isinstance(result, dict) and (
-                "messages" not in result or 
-                not any(msg.get("severity") == "error" for msg in result.get("messages", []))
+                "messages" not in result
+                or not any(
+                    msg.get("severity") == "error" for msg in result.get("messages", [])
+                )
             ):
                 return proof_candidate
             else:
@@ -58,6 +63,7 @@ def iterate_until_valid_final_proof(
                 print(f"Proof candidate {proof_candidate} failed")
         cnt += 1
     return None
+
 
 def prove_theorem_via_hypotheses_search(
     proof_state: ProofSearchState,
@@ -88,13 +94,26 @@ def prove_theorem_via_hypotheses_search(
     valid_proofs.reverse()
     for i in valid_proofs:
         proof_state.theoretical_hypotheses.pop(i)
-    print( "In total ", len(proof_state.proven_hypotheses), "hypotheses proven from initially ", str(len(proof_state.theoretical_hypotheses)) + str(len(proof_state.proven_hypotheses)) + "available ones")
+    print(
+        "In total ",
+        len(proof_state.proven_hypotheses),
+        "hypotheses proven from initially ",
+        str(len(proof_state.theoretical_hypotheses))
+        + str(len(proof_state.proven_hypotheses))
+        + "available ones",
+    )
     return proof_state
 
-def find_final_proof(proof_state: ProofSearchState, api_client, lean_client, nr_tries=1,  verbose=False):
-    proof = iterate_until_valid_final_proof(proof_state, api_client, lean_client, nr_tries, verbose)
+
+def find_final_proof(
+    proof_state: ProofSearchState, api_client, lean_client, nr_tries=1, verbose=False
+):
+    proof = iterate_until_valid_final_proof(
+        proof_state, api_client, lean_client, nr_tries, verbose
+    )
     proof_state.proof = proof_state.build_final_proof(proof)
     return proof_state.proof
+
 
 def prove_theorem(
     name: str, hypotheses: list[str], goal: str, verbose=False
