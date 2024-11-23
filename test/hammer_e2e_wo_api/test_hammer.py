@@ -35,7 +35,6 @@ class TestHammer(unittest.TestCase):
         Let's break this down into critical Lean4 hypotheses:
 
         ```lean
-        -- if g divides both numbers, it divides their difference
         ∀ a b g: ℕ , g ∣ a → g ∣ b → g ∣ (a - b) 
         ```
 
@@ -63,7 +62,7 @@ class TestHammer(unittest.TestCase):
         api_output_2 = """
 ```lean
 intros a b g hga hgb
-by_cases h : a ≥ b
+by_cases h : a >= b
 · exact Nat.dvd_sub h hga hgb
 · simp [Nat.sub_eq_zero_of_le (le_of_not_ge h)]
 ```
@@ -122,7 +121,19 @@ exact h5
         prove_theorem_via_hypotheses_search(
             proof_state, client, self.lean_client, verbose=True
         )
+        assert len(proof_state.proven_hypotheses) == 5
+        for x in proof_state.proven_hypotheses:
+            print(x)
+            print("\n")
+            print(x.proof)
         final_proof_with_hypotheses = find_final_proof(proof_state, client, self.lean_client, 1, verbose=True)
+        result = self.lean_client.run_code(final_proof_with_hypotheses, 0, True)
+        if not (isinstance(result, dict) and (
+            "messages" not in result or 
+            not any(msg.get("severity") == "error" for msg in result.get("messages", []))
+        )):
+                assert 2 == 1
+
 
 
 if __name__ == "__main__":

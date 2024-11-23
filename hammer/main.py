@@ -91,8 +91,10 @@ def prove_theorem_via_hypotheses_search(
     print( "In total ", len(proof_state.proven_hypotheses), "hypotheses proven from initially ", str(len(proof_state.theoretical_hypotheses)) + str(len(proof_state.proven_hypotheses)) + "available ones")
     return proof_state
 
-def find_final_proof(proof_state, api_client, lean_client, nr_tries=1,  verbose=False):
-    return iterate_until_valid_final_proof(proof_state, api_client, lean_client, nr_tries, verbose)
+def find_final_proof(proof_state: ProofSearchState, api_client, lean_client, nr_tries=1,  verbose=False):
+    proof = iterate_until_valid_final_proof(proof_state, api_client, lean_client, nr_tries, verbose)
+    proof_state.proof = proof_state.build_final_proof(proof)
+    return proof_state.proof
 
 def prove_theorem(
     name: str, hypotheses: list[str], goal: str, verbose=False

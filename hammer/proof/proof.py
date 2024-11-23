@@ -177,3 +177,12 @@ class ProofSearchState:
         code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by\n"
         code = unicode_escape(code)
         return code
+
+    def build_final_proof(self, proof):
+        initial_part = f"theorem {self.name} {' '.join(self.original_hypotheses)} : \n{self.goal} := by"
+        have_statements = "\n".join(
+            [f"have {h.name} : {h.hypothesis} := by\n" + "\n".join("  " + line for line in h.proof.split("\n")) for h in self.proven_hypotheses]
+        )
+        final_proof = f"{initial_part} \n{have_statements} \n{proof}"
+        final_proof = unicode_escape(final_proof)
+        return final_proof

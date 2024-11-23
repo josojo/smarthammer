@@ -2,7 +2,8 @@ def unicode_escape(input_str):
     """
     Converts all non-ASCII characters in the input string to their Unicode escape sequences.
     """
-    out_str = input_str.encode("unicode_escape").decode("ascii")
+    out_str = input_str.encode("raw_unicode_escape").decode("unicode_escape")
+
     return out_str
 
 

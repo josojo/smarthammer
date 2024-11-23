@@ -55,10 +55,16 @@ class LeanServer:
         self.proc.sendline()
         self.proc.expect_exact("\r\n")
         try:
-            self.proc.expect(r'env": \d+\}', timeout=300)
-            output = self.proc.before + self.proc.match.group()
-            if verbose:
-                print("Receiving the following output", output)
-            return json.loads(output)
+            try:
+                self.proc.expect(r'env": \d+\}', timeout=300)
+                output = self.proc.before + self.proc.match.group()
+                if verbose:
+                    print("Receiving the following output", output)
+                return json.loads(output)
+            except pexpect.exceptions.EOF:
+                # Print the buffer contents even if expect times out
+                print("EOF. Current buffer contents:")
+                print(self.proc.before)
+                raise
         except pexpect.exceptions.TIMEOUT:
             raise pexpect.exceptions.TIMEOUT
