@@ -10,6 +10,7 @@ def iterate_until_valid_proof(
     client: Client,
     lean_client: LeanServer,
     max_iteration=1,
+    max_correction_iteration=1,
     verbose=False,
 ):
     cnt = 0
@@ -29,8 +30,25 @@ def iterate_until_valid_proof(
             ):
                 return proof_candidate
             else:
-                ## todo: cut of the proof at the invalid place and retry it
-                print(f"Proof candidate {proof_candidate} failed")
+                for i in range(1, max_correction_iteration):
+                    error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
+                    first_error = error_messages[0] if error_messages else None
+                    prompt = f"The following proof ```lean4 \n{proof_candidate}\n ``` failed with error: {first_error}. Please propose a fixed lean proof that corrects this error and proves the theorem. Put your fixed proof into a new ```lean4 ``` block."
+                    print(prompt)
+                    proof_candidate = client.send(prompt, verbose)
+                    code = proof_state.hypothesis_as_code(hyptotheses_number) + proof_candidate
+                    result = lean_client.run_code(code, 0, verbose)
+                    if isinstance(result, dict) and (
+                        "messages" not in result
+                        or not any(
+                            msg.get("severity") == "error" for msg in result.get("messages", [])
+                        )
+                    ):
+                        return proof_candidate
+                    if verbose:
+                        error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
+                        first_error = error_messages[0] if error_messages else None
+                        print(f"Proof candidate {proof_candidate} failed with the error {first_error}")
         cnt += 1
     return None
 
