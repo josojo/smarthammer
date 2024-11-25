@@ -34,8 +34,7 @@ def iterate_until_valid_proof(
                 for _ in range(0, max_correction_iteration):
                     error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
                     first_error = error_messages[0] if error_messages else None
-                    prompt = f"The following proof ```lean4 {proof_state.hypothesis_as_code(hyptotheses_number)}\n{proof_candidate}\n ``` failed with error: {first_error}. Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
-                    print(prompt)
+                    prompt = f"The following proof \n```lean4 \n {proof_state.hypothesis_as_code(hyptotheses_number)}{proof_candidate}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
                     response = client.send(prompt, verbose)
                     code = proof_state.hypothesis_as_code(hyptotheses_number) + extract_proof_from_text(response)[0]
                     result = lean_client.run_code(code, 0, verbose)
@@ -46,10 +45,10 @@ def iterate_until_valid_proof(
                         )
                     ):
                         return proof_candidate
-                    if verbose:
-                        error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
-                        first_error = error_messages[0] if error_messages else None
-                        print(f"Proof candidate {proof_candidate} failed with the error {first_error}")
+                    # if verbose:
+                        # error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
+                        # first_error = error_messages[0] if error_messages else None
+                        # print(f"Proof candidate: {proof_candidate} failed with the error {first_error}")
         cnt += 1
     return None
 

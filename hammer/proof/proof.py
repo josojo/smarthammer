@@ -107,8 +107,8 @@ class ProofSearchState:
         total_prompt = prompt_part_1 + prompt_part_2 + prompt_part_3 + examples
         response = claude_client.send(total_prompt, verbose)
         proof = extract_lean_blocks(response)[0]
-        if verbose:
-            print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
+        # if verbose:
+            # print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
         return proof
 
     def get_theorem_code(self):
@@ -176,7 +176,7 @@ class ProofSearchState:
                 if not line.strip().startswith("--")
             ]
         )
-        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by\n"
+        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by"
         code = unicode_escape(code)
         return code
 

@@ -1,5 +1,6 @@
 """Client module for interacting with Claude AI via Anthropic's API."""
 import os
+import time
 import anthropic
 
 
@@ -14,13 +15,27 @@ class Client:
     def send(self, message, verbose=False):
         """Send a message to Claude and return its response."""
         if verbose:
-            print(f"Sending message to Claude: {message}")
-        result = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": message}],
-        )
-        output = result.content[0].text
-        if verbose:
-            print(f"Received response from Claude: {output}")
-        return output
+            print(f"\033[33mSending message to Claude: {message} \n \n \033[0m")
+        
+        max_retries = 3
+        retry_delay = 1  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                result = self.client.messages.create(
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=1024,
+                    messages=[{"role": "user", "content": message}],
+                )
+                output = result.content[0].text
+                if verbose:
+                    print(f"\033[33mReceived response from Claude: {output}\033[0m")
+                return output
+                
+            except anthropic.InternalServerError as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    raise  # Re-raise the exception if all retries failed
+                if verbose:
+                    print(f"Got server error, retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff

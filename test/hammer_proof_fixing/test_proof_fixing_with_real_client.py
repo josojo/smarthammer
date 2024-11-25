@@ -25,13 +25,12 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
 
         # Test the function
         proof_candidate = iterate_until_valid_proof(
-            proof_state, 0, client, self.lean_client, max_iteration=4, verbose=True
+            proof_state, 0, client, self.lean_client, max_iteration=2, max_correction_iteration=4, verbose=True
         )
         assert proof_candidate is not None
 
         # Check if a valid proof candidate was returned
         self.assertIsNotNone(proof_candidate)
-        assert 1 == 3
 
 if __name__ == "__main__":
     unittest.main()
