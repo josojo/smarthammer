@@ -46,7 +46,9 @@ class LeanServer:
             )  # [1:-1] removes single quotes
 
         command_array = command.split("\\n")
-        print("command_array", command_array)
+        command_array = [cmd for cmd in command_array if cmd != '']
+        if verbose:
+            print("command_array", command_array)
         for command in command_array:
             if verbose:
                 print("sending the following command", command)
@@ -64,6 +66,11 @@ class LeanServer:
             except pexpect.exceptions.EOF:
                 # Print the buffer contents even if expect times out
                 print("EOF. Current buffer contents:")
+                print(self.proc.before)
+                raise
+            except pexpect.exceptions.OSError:
+                # Print the buffer contents even if expect times out
+                print("OSERROR. Current buffer contents:")
                 print(self.proc.before)
                 raise
         except pexpect.exceptions.TIMEOUT:

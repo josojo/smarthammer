@@ -77,7 +77,7 @@ class ProofSearchState:
             + self.hypothesis_as_code(number_of_hypotheses)
             + f" {starting_code}```."
         )
-        prompt_part_3 = f"Complete the proof and put it into ```lean ``` block."
+        prompt_part_3 = f"Complete the proof and put only the proof into ```lean ``` block."
         examples = f"""Examples:
         Example 1:
         Input: {prompt_part_1} ```lean theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
@@ -108,7 +108,7 @@ class ProofSearchState:
         response = claude_client.send(total_prompt, verbose)
         proof = extract_lean_blocks(response)[0]
         if verbose:
-            print(f"Proof candidate for {number_of_hypotheses} hypotheses: {proof}")
+            print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
         return proof
 
     def get_theorem_code(self):

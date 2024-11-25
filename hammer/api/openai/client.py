@@ -1,5 +1,7 @@
 """Client module for interacting with OPEN AI via openai's API."""
+import os
 from openai import OpenAI
+import json
 
 
 class Client:
@@ -7,8 +9,8 @@ class Client:
 
     def __init__(self):
         self.client = OpenAI(
-            organization="Personal",
-            project="Default project",
+            organization=os.getenv("OPENAI_ORG_ID"),
+            project=os.getenv("OPENAI_PROJECT_ID"),
         )
 
     def send(self, message, verbose=False):
@@ -24,7 +26,7 @@ class Client:
             ],
             model="gpt-4o-mini",
         )
-        output = result.content[0].text
+        content = result.choices[0].message.content
         if verbose:
-            print(f"Received response from OpenAI: {output}")
-        return output
+            print(f"Received response from OpenAI: {content}")
+        return content
