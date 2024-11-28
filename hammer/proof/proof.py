@@ -112,7 +112,17 @@ class ProofSearchState:
         return proof
 
     def get_theorem_code(self):
-        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} := by\n"
+        # code = f"theorem {self.name} {' '.join(self.original_hypotheses)} \n {' \n'.join(map(str, self.proven_hypotheses))} : \n {self.goal} := by\n"
+        # Start with the theorem name and original hypotheses
+        code = f"theorem {self.name} {' '.join(self.original_hypotheses)}"
+        
+        # Add each proven hypothesis on a new line
+        if self.proven_hypotheses:
+            proven_hyps = '\n'.join(f"  {str(h)}" for h in self.proven_hypotheses)
+            code += f"\n{proven_hyps}"
+        
+        # Add the goal and by
+        code += f" : \n{self.goal} := by\n"
         code = unicode_escape(code)
         return code
 
@@ -120,33 +130,33 @@ class ProofSearchState:
 
         code = self.get_theorem_code()
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
-        prompt_part_2 = "```lean " + code + f" {starting_code}```."
-        prompt_part_3 = f"Complete the proof and put it into ```lean ``` block."
+        prompt_part_2 = "```lean " + code + f" {starting_code}```\n"
+        prompt_part_3 = f"Complete the proof and put only the proof into ```lean ``` block.\n"
         examples = f"""Examples:
-        Example 1:
-        Input: {prompt_part_1} ```lean theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
-        Output: ```lean
-            -- Apply h to get first equation
-            have eq1 := h a b
-            -- Apply h0 to (a + b)
-            have eq2 := h0 (a + b)
-            -- From eq1: f(2a) + 2f(b) = f(f(a+b))
-            -- From eq2: f(0) + 2f(a+b) = f(f(a+b))
-            -- Therefore: f(2a) + 2f(b) = f(0) + 2f(a+b)
-            rw [← eq2] at eq1
-            rw [add_comm (f 0) (2 * f (a + b))] at eq1
-            exact eq1```
-        Example 2:
-        Input: {prompt_part_1}  ```lean theorem exists_infinite_primes2 (n : ℕ) : ∃ p, n ≤ p ∧ Prime p := by\n let p := minFac (n ! + 1) ```. {prompt_part_3} 
-        Output: ```lean
-            have f1 : n ! + 1 ≠ 1 := ne_of_gt <| succ_lt_succ <| factorial_pos _
-            have pp : Prime p := minFac_prime f1
-            have np : n ≤ p :=
-                le_of_not_ge fun h =>
-                have h1 : p ∣ n ! := dvd_factorial (minFac_pos _) h
-                have h2 : p ∣ 1 := (Nat.dvd_add_iff_right h1).2 (minFac_dvd _)
-                pp.not_dvd_one h2
-            ⟨p, np, pp⟩```
+Example 1:
+Input: {prompt_part_1} ```lean theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```.\n {prompt_part_3} 
+Output: ```lean
+    -- Apply h to get first equation
+    have eq1 := h a b
+    -- Apply h0 to (a + b)
+    have eq2 := h0 (a + b)
+    -- From eq1: f(2a) + 2f(b) = f(f(a+b))
+    -- From eq2: f(0) + 2f(a+b) = f(f(a+b))
+    -- Therefore: f(2a) + 2f(b) = f(0) + 2f(a+b)
+    rw [← eq2] at eq1
+    rw [add_comm (f 0) (2 * f (a + b))] at eq1
+    exact eq1```
+Example 2:
+Input: {prompt_part_1}  ```lean theorem exists_infinite_primes2 (n : ℕ) : ∃ p, n ≤ p ∧ Prime p := by\n let p := minFac (n ! + 1) ```.\n {prompt_part_3} 
+Output: ```lean
+    have f1 : n ! + 1 ≠ 1 := ne_of_gt <| succ_lt_succ <| factorial_pos _
+    have pp : Prime p := minFac_prime f1
+    have np : n ≤ p :=
+        le_of_not_ge fun h =>
+        have h1 : p ∣ n ! := dvd_factorial (minFac_pos _) h
+        have h2 : p ∣ 1 := (Nat.dvd_add_iff_right h1).2 (minFac_dvd _)
+        pp.not_dvd_one h2
+    ⟨p, np, pp⟩```
         """
         total_prompt = prompt_part_1 + prompt_part_2 + prompt_part_3 + examples
         response = claude_client.send(total_prompt, verbose)

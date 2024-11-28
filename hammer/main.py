@@ -58,6 +58,7 @@ def iterate_until_valid_final_proof(
     client: Client,
     lean_client: LeanServer,
     max_iteration=1,
+    max_correction_iteration=1,
     verbose=False,
 ):
     cnt = 0
@@ -77,8 +78,20 @@ def iterate_until_valid_final_proof(
             ):
                 return proof_candidate
             else:
-                ## todo: cut of the proof at the invalid place and retry it
-                print(f"Proof candidate {proof_candidate} failed")
+                for _ in range(0, max_correction_iteration):
+                    error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
+                    first_error = error_messages[0] if error_messages else None
+                    prompt = f"The following proof \n```lean4 \n {proof_state.get_theorem_code()}{proof_candidate}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+                    response = client.send(prompt, verbose)
+                    code = proof_state.get_theorem_code() + extract_proof_from_text(response)[0]
+                    result = lean_client.run_code(code, 0, verbose)
+                    if isinstance(result, dict) and (
+                        "messages" not in result
+                        or not any(
+                            msg.get("severity") == "error" for msg in result.get("messages", [])
+                        )
+                    ):
+                        return proof_candidate
         cnt += 1
     return None
 
