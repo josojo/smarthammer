@@ -32,7 +32,7 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
             client,
             self.lean_client,
             max_iteration=1,
-            max_correction_iteration=4,
+            max_correction_iteration=3,
             verbose=True,
         )
         assert proof_candidate is not None

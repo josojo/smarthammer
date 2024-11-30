@@ -61,7 +61,9 @@ class LeanServer:
                 self.proc.expect(r'env": \d+\}', timeout=100)
                 output = self.proc.before + self.proc.match.group()
                 if verbose:
-                    print(f"Receiving the following simulation output\n \033[35m{output}\033[0m")
+                    print(
+                        f"Receiving the following simulation output\n \033[35m{output}\033[0m"
+                    )
                 return json.loads(output)
             except pexpect.exceptions.EOF:
                 # Print the buffer contents even if expect times out
