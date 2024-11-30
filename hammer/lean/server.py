@@ -56,7 +56,7 @@ class LeanServer:
         self.proc.expect_exact("\r\n")
         try:
             try:
-                self.proc.expect(r'env": \d+\}', timeout=300)
+                self.proc.expect(r'env": \d+\}', timeout=100)
                 output = self.proc.before + self.proc.match.group()
                 if verbose:
                     print("Receiving the following simulation output\n", output)
@@ -66,10 +66,7 @@ class LeanServer:
                 print("EOF. Current buffer contents:")
                 print(self.proc.before)
                 raise
-            except pexpect.exceptions.OSError:
-                # Print the buffer contents even if expect times out
-                print("OSERROR. Current buffer contents:")
-                print(self.proc.before)
-                raise
         except pexpect.exceptions.TIMEOUT:
+            print("TIMEOUT. Current buffer contents:")
+            print(self.proc.before)
             raise pexpect.exceptions.TIMEOUT

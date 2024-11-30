@@ -61,7 +61,7 @@ class ProofSearchState:
         response = claude_client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
-        hypotheses = extract_lean_blocks(response)
+        hypotheses = [h.replace("\n lemma ", "") if h.startswith("\n lemma ") else h for h in extract_lean_blocks(response)]
         print("extracted hy", hypotheses)
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
@@ -186,6 +186,8 @@ Output: ```lean
                 if not line.strip().startswith("--")
             ]
         )
+        if goal.endswith('\n'):
+            goal = goal.rstrip('\n')
         code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by"
         code = unicode_escape(code)
         return code
