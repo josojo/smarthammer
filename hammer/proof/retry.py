@@ -40,5 +40,4 @@ def retry_until_success(
             raise Exception(
                 f"Error occurred in hypothesis section (line {line_number}), cannot fix"
             )
-        print(f"Proof candidate: {code} failed with the error {first_error}")
     return None

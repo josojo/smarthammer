@@ -47,9 +47,11 @@ class LeanServer:
 
         command_array = command.split("\\n")
         command_array = [cmd for cmd in command_array if cmd.strip() != ""]
+        if verbose:
+            print("Sending the following commands to the REPL:")
         for i, command in enumerate(command_array):
             if verbose:
-                print(f"\033[34mSending {i}-th line {command}\033[0m")
+                print(f"{i}-th line: \033[34m {command}\033[0m")
             self.proc.sendline(command)
             self.proc.expect_exact(command + "\r\n")
         self.proc.sendline()
@@ -59,7 +61,7 @@ class LeanServer:
                 self.proc.expect(r'env": \d+\}', timeout=100)
                 output = self.proc.before + self.proc.match.group()
                 if verbose:
-                    print("Receiving the following simulation output\n", output)
+                    print(f"Receiving the following simulation output\n \033[35m{output}\033[0m")
                 return json.loads(output)
             except pexpect.exceptions.EOF:
                 # Print the buffer contents even if expect times out

@@ -15,7 +15,7 @@ class Client:
     def send(self, message, verbose=False):
         """Send a message to Claude and return its response."""
         if verbose:
-            print(f"\033[33mSending message to Claude: {message} \n \n \033[0m")
+            print(f"Sending message to Claude:\n \033[33m {message} \n \n \033[0m")
 
         max_retries = 3
         retry_delay = 1  # seconds
@@ -29,7 +29,7 @@ class Client:
                 )
                 output = result.content[0].text
                 if verbose:
-                    print(f"\033[33mReceived response from Claude: {output}\033[0m")
+                    print(f"Received response from Claude:\n \033[33m {output}\033[0m")
                 return output
 
             except anthropic.InternalServerError as e:
