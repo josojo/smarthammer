@@ -62,11 +62,13 @@ class ProofSearchState:
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
         hypotheses = [
-            h.split(":", 1)[1].strip()
-            if h.startswith("\n lemma ")
-            or h.startswith("\nlemma ")
-            or h.startswith("lemma ")
-            else h
+            (
+                h.split(":", 1)[1].strip()
+                if h.startswith("\n lemma ")
+                or h.startswith("\nlemma ")
+                or h.startswith("lemma ")
+                else h
+            )
             for h in extract_lean_blocks(response)
         ]
         print("extracted hy", hypotheses)

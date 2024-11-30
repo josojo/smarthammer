@@ -1,4 +1,5 @@
 """Server module for interacting with Lean REPL."""
+
 import json
 import os
 import pexpect
@@ -37,7 +38,9 @@ class LeanServer:
             pexpect.exceptions.TIMEOUT: If REPL response times out
         """
         if env is not None:
-            command = json.dumps({"cmd": code, "env": env},).replace(
+            command = json.dumps(
+                {"cmd": code, "env": env},
+            ).replace(
                 "\\\\", "\\"
             )  # [1:-1] removes single quotes
         else:

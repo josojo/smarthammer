@@ -1,4 +1,5 @@
 """Client module for interacting with OPEN AI via openai's API."""
+
 import os
 from openai import OpenAI
 import json

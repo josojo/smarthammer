@@ -47,5 +47,5 @@ or
 ## Linting
 
 ```cmd
-black .
+python -m black .
 ```
