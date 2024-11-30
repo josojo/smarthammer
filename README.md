@@ -29,7 +29,19 @@ pytest
 and for running only one test:
 
 ```cmd
-pytest -q test/hammer_e2e_wo_api/test_hammer.py
+pytest -qs test/hammer_e2e_wo_api/test_hammer.py
+```
+
+for running manual tests:
+
+```cmd
+ytest -sq ./test/with_api_interaction/hammer_proof_fixing/test_final_proof_fixing_with_real_client.py -m manual
+```
+
+or
+
+```cmd
+   pytest -v -m manual
 ```
 
 ## Linting

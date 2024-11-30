@@ -43,8 +43,7 @@ class TestHammer(unittest.TestCase):
         (21*n + 4) - (14*n + 3) = 7*n + 1
         ```
 
-        ```lean
-        3*(14*n + 3) - 2*(21*n + 4) = 1
+        ```lean\nlemma lem2 : 3*(14*n + 3) - 2*(21*n + 4) = 1
         ```
 
         ```lean

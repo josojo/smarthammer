@@ -2,7 +2,7 @@ import sys
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.claude.client import Client
-from hammer.proof.utils import  extract_proof_from_text
+from hammer.proof.retry import retry_until_success
 
 
 def iterate_until_valid_proof(
@@ -31,24 +31,9 @@ def iterate_until_valid_proof(
             ):
                 return proof_candidate
             else:
-                for _ in range(0, max_correction_iteration):
-                    error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
-                    first_error = error_messages[0] if error_messages else None
-                    prompt = f"The following proof \n```lean4 \n {proof_state.hypothesis_as_code(hyptotheses_number)}{proof_candidate}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
-                    response = client.send(prompt, verbose)
-                    code = proof_state.hypothesis_as_code(hyptotheses_number) + extract_proof_from_text(response)[0]
-                    result = lean_client.run_code(code, 0, verbose)
-                    if isinstance(result, dict) and (
-                        "messages" not in result
-                        or not any(
-                            msg.get("severity") == "error" for msg in result.get("messages", [])
-                        )
-                    ):
-                        return proof_candidate
-                    # if verbose:
-                        # error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
-                        # first_error = error_messages[0] if error_messages else None
-                        # print(f"Proof candidate: {proof_candidate} failed with the error {first_error}")
+                proof = retry_until_success(client, lean_client, proof_state.hypothesis_as_code(hyptotheses_number), proof_candidate, result, max_correction_iteration, verbose)
+                if proof:
+                    return proof
         cnt += 1
     return None
 
@@ -78,20 +63,9 @@ def iterate_until_valid_final_proof(
             ):
                 return proof_candidate
             else:
-                for _ in range(0, max_correction_iteration):
-                    error_messages = [msg for msg in result.get("messages", []) if msg.get("severity") == "error"]
-                    first_error = error_messages[0] if error_messages else None
-                    prompt = f"The following proof \n```lean4 \n {proof_state.get_theorem_code()}{proof_candidate}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
-                    response = client.send(prompt, verbose)
-                    code = proof_state.get_theorem_code() + extract_proof_from_text(response)[0]
-                    result = lean_client.run_code(code, 0, verbose)
-                    if isinstance(result, dict) and (
-                        "messages" not in result
-                        or not any(
-                            msg.get("severity") == "error" for msg in result.get("messages", [])
-                        )
-                    ):
-                        return proof_candidate
+                proof = retry_until_success(client, lean_client, proof_state.get_theorem_code(), proof_candidate, result, max_correction_iteration, verbose)
+                if proof:
+                    return proof
         cnt += 1
     return None
 
@@ -173,7 +147,7 @@ def prove_theorem(
     claude_client = Client()
 
     prove_theorem_via_hypotheses_search(
-        proof_state, claude_client, lean_client, max_iteration_hypotheses_proof=1, max_correction_iteration_hypotheses_proof=1, verbose=verbose
+        proof_state, claude_client, lean_client, max_iteration_hypotheses_proof, max_correction_iteration_hypotheses_proof, verbose=verbose
     )
     find_final_proof(proof_state, claude_client, lean_client, max_iteration_final_proof, max_correction_iteration_final_proof, verbose)
     return proof_state
@@ -183,8 +157,8 @@ def main(name, hypothesis, goal):
     """Main entry point for the theorem prover."""
 
     try:
-        proof_state = prove_theorem(name, hypothesis, goal, 1,1,1,1, True)
-        # proof_state = prove_theorem(name, hypothesis, goal, 2,3,3,4, True)
+        # proof_state = prove_theorem(name, hypothesis, goal, 1,1,1,1, True)
+        proof_state = prove_theorem(name, hypothesis, goal, 2,3,3,4, True)
         if proof_state.proof:
             print(f"Proof found for theorem {name}:")
             print(proof_state.proof)
