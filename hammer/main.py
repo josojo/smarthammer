@@ -128,12 +128,12 @@ def prove_theorem_via_hypotheses_search(
     for i in valid_proofs:
         proof_state.theoretical_hypotheses.pop(i)
     print(
-        "In total ",
+        "\033[33mIn total ",
         len(proof_state.proven_hypotheses),
         "hypotheses proven from initially ",
         str(len(proof_state.theoretical_hypotheses)
         + len(proof_state.proven_hypotheses))
-        + " available ones",
+        + " available ones\033[0m",
     )
     return proof_state
 
@@ -144,7 +144,8 @@ def find_final_proof(
     proof = iterate_until_valid_final_proof(
         proof_state, api_client, lean_client, max_iteration_final_proof,max_iternation_correction_proof, verbose
     )
-    proof_state.proof = proof_state.build_final_proof(proof)
+    if proof:
+        proof_state.proof = proof_state.build_final_proof(proof)
     return proof_state.proof
 
 
@@ -183,6 +184,7 @@ def main(name, hypothesis, goal):
 
     try:
         proof_state = prove_theorem(name, hypothesis, goal, 1,1,1,1, True)
+        # proof_state = prove_theorem(name, hypothesis, goal, 2,3,3,4, True)
         if proof_state.proof:
             print(f"Proof found for theorem {name}:")
             print(proof_state.proof)

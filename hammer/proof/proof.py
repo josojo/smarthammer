@@ -49,19 +49,19 @@ class ProofSearchState:
         Input: {prompt_part_1} ```lean theorem mathd_numbertheory_457_1 (n : ℕ)(h₁ : 80325∣ (n !) ) : 17 ≤ n ```. {prompt_part_3}
         Output: 
             Natural language proof: The number 80325∣ has the factorization 3x3x3x5x5x7x17. The highest prime of this factorization is 17. One also knows that a prime only divides n! if n is bigger than the prime, as otherwise the prime is not part of the product of n!. Hence, 17 ≤ n. \n
-            Lean4 hypotheses: ```lean 80325 = 3*3*3*5*5*7*17```, ```lean ∀ p : ℕ, Nat.Prime p → p∣(n !) → p ≤ n ``` and ```lean 17∣(n !) ```.
+            Lean4 hypotheses: ```lean\nlemma lem1 : 80325 = 3*3*3*5*5*7*17```, ```lean\nlemma lem2 : ∀ p : ℕ, Nat.Prime p → p∣(n !) → p ≤ n ``` and ```lean\nlemma lem3 : 17∣(n !) ```.
         Example 2:
         Input: {prompt_part_1} ```lean theorem imo_2019_p1 (f : ℤ → ℤ) (h : ((∀ a b, f (2 * a) + (2 * f b) = f (f (a + b)))) : ((∀ z, f z = 0 )∨ (∃ c, ∀ z, f z = 2 * z + c))) ```. {prompt_part_3}
         Output:
            Natural language proof: Substituting a = 0, b = n + 1 gives f (f (n + 1)) = f (0) + 2 * f (n+1). Substituting
             a = 1, b = n gives f (f (n + 1)) = f (2) + 2 * f (n). Hence, f (n + 1) - f (n) = 1/2 * (f (2) - f (0)). Since this holds for all n, f is linear.
            Writing f (n) = Mn + K for arbitrary constants M and K, we and putting into the equations, we get M =2 and K = f (0).
-           Lean4 hypotheses:  ```lean ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, ```lean ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, ```lean ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, ```lean ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
+           Lean4 hypotheses:  ```lean\n lemma lem1 : ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, ```lean\n lemma lem2 : ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, ```lean\n lemma lem3 : ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, ```lean\n lemma lem4 : ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
         """
         response = claude_client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
-        hypotheses = [h.replace("\n lemma ", "") if h.startswith("\n lemma ") else h for h in extract_lean_blocks(response)]
+        hypotheses = [h.split(":", 1)[1].strip() if h.startswith("\n lemma ") or h.startswith("\nlemma ") or h.startswith("lemma ") else h for h in extract_lean_blocks(response)]
         print("extracted hy", hypotheses)
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
