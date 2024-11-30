@@ -61,7 +61,14 @@ class ProofSearchState:
         response = claude_client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
-        hypotheses = [h.split(":", 1)[1].strip() if h.startswith("\n lemma ") or h.startswith("\nlemma ") or h.startswith("lemma ") else h for h in extract_lean_blocks(response)]
+        hypotheses = [
+            h.split(":", 1)[1].strip()
+            if h.startswith("\n lemma ")
+            or h.startswith("\nlemma ")
+            or h.startswith("lemma ")
+            else h
+            for h in extract_lean_blocks(response)
+        ]
         print("extracted hy", hypotheses)
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
@@ -77,7 +84,9 @@ class ProofSearchState:
             + self.hypothesis_as_code(number_of_hypotheses)
             + f" {starting_code}```."
         )
-        prompt_part_3 = f"Complete the proof and put only the proof into ```lean ``` block."
+        prompt_part_3 = (
+            f"Complete the proof and put only the proof into ```lean ``` block."
+        )
         examples = f"""Examples:
         Example 1:
         Input: {prompt_part_1} ```lean theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
@@ -108,19 +117,19 @@ class ProofSearchState:
         response = claude_client.send(total_prompt, verbose)
         proof = extract_lean_blocks(response)[0]
         # if verbose:
-            # print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
+        # print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
         return proof
 
     def get_theorem_code(self):
         # code = f"theorem {self.name} {' '.join(self.original_hypotheses)} \n {' \n'.join(map(str, self.proven_hypotheses))} : \n {self.goal} := by\n"
         # Start with the theorem name and original hypotheses
         code = f"theorem {self.name} {' '.join(self.original_hypotheses)}"
-        
+
         # Add each proven hypothesis on a new line
         if self.proven_hypotheses:
-            proven_hyps = '\n'.join(f"  {str(h)}" for h in self.proven_hypotheses)
+            proven_hyps = "\n".join(f"  {str(h)}" for h in self.proven_hypotheses)
             code += f"\n{proven_hyps}"
-        
+
         # Add the goal and by
         code += f" : \n{self.goal} := by\n"
         code = unicode_escape(code)
@@ -131,7 +140,9 @@ class ProofSearchState:
         code = self.get_theorem_code()
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
         prompt_part_2 = "```lean " + code + f" {starting_code}```\n"
-        prompt_part_3 = f"Complete the proof and put only the proof into ```lean ``` block.\n"
+        prompt_part_3 = (
+            f"Complete the proof and put only the proof into ```lean ``` block.\n"
+        )
         examples = f"""Examples:
 Example 1:
 Input: {prompt_part_1} ```lean theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```.\n {prompt_part_3} 
@@ -186,8 +197,8 @@ Output: ```lean
                 if not line.strip().startswith("--")
             ]
         )
-        if goal.endswith('\n'):
-            goal = goal.rstrip('\n')
+        if goal.endswith("\n"):
+            goal = goal.rstrip("\n")
         code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by"
         code = unicode_escape(code)
         return code

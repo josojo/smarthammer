@@ -16,10 +16,10 @@ class Client:
         """Send a message to Claude and return its response."""
         if verbose:
             print(f"\033[33mSending message to Claude: {message} \n \n \033[0m")
-        
+
         max_retries = 3
         retry_delay = 1  # seconds
-        
+
         for attempt in range(max_retries):
             try:
                 result = self.client.messages.create(
@@ -31,7 +31,7 @@ class Client:
                 if verbose:
                     print(f"\033[33mReceived response from Claude: {output}\033[0m")
                 return output
-                
+
             except anthropic.InternalServerError as e:
                 if attempt == max_retries - 1:  # Last attempt
                     raise  # Re-raise the exception if all retries failed

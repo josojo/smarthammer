@@ -5,6 +5,7 @@ from hammer.main import iterate_until_valid_final_proof
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import Hypothesis, ProofSearchState
 
+
 class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
     def setUp(self):
         # Setup common test data
@@ -15,16 +16,15 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
         name = "thm1"
         hypotheses = ["(n : ℕ)", "(oh0 : 0 < n)"]
         goal = "Nat.gcd (21*n + 4) (14*n + 3) = 1"
-        
-        
+
         # Create a proof state
         proof_state = ProofSearchState(name, hypotheses, goal)
         proof_state.proven_hypotheses = [
-            Hypothesis("h0","∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None),
-            Hypothesis("h1","(21*n + 4) - (14*n + 3) = 7*n + 1", None),
-            Hypothesis("h2","3*(14*n + 3) - 2*(21*n + 4) = 1", None),
-            Hypothesis("h3","∀ g : ℕ, g ∣ (21*n + 4) → g ∣ (14*n + 3) → g ∣ 1", None),
-            Hypothesis("h4","∀ g : ℕ, g ∣ 1 → g = 1", None),
+            Hypothesis("h0", "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None),
+            Hypothesis("h1", "(21*n + 4) - (14*n + 3) = 7*n + 1", None),
+            Hypothesis("h2", "3*(14*n + 3) - 2*(21*n + 4) = 1", None),
+            Hypothesis("h3", "∀ g : ℕ, g ∣ (21*n + 4) → g ∣ (14*n + 3) → g ∣ 1", None),
+            Hypothesis("h4", "∀ g : ℕ, g ∣ 1 → g = 1", None),
         ]
         # Create mock client
         client = Client()
@@ -42,6 +42,7 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
 
         # Check if a valid proof candidate was returned
         self.assertIsNotNone(proof_candidate)
+
 
 if __name__ == "__main__":
     unittest.main()

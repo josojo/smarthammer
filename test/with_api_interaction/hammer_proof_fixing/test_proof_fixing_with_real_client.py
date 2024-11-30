@@ -5,6 +5,7 @@ from hammer.main import iterate_until_valid_proof
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState
 
+
 class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
     def setUp(self):
         # Setup common test data
@@ -15,8 +16,7 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
         name = "thm1"
         hypotheses = ["(n : ℕ)", "(oh0 : 0 < n)"]
         goal = "Nat.gcd (21*n + 4) (14*n + 3) = 1"
-        
-        
+
         # Create a proof state
         proof_state = ProofSearchState(name, hypotheses, goal)
         proof_state.theoretical_hypotheses = [
@@ -27,12 +27,19 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
 
         # Test the function
         proof_candidate = iterate_until_valid_proof(
-            proof_state, 0, client, self.lean_client, max_iteration=1, max_correction_iteration=4, verbose=True
+            proof_state,
+            0,
+            client,
+            self.lean_client,
+            max_iteration=1,
+            max_correction_iteration=4,
+            verbose=True,
         )
         assert proof_candidate is not None
 
         # Check if a valid proof candidate was returned
         self.assertIsNotNone(proof_candidate)
+
 
 if __name__ == "__main__":
     unittest.main()

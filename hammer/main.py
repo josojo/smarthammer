@@ -31,7 +31,15 @@ def iterate_until_valid_proof(
             ):
                 return proof_candidate
             else:
-                proof = retry_until_success(client, lean_client, proof_state.hypothesis_as_code(hyptotheses_number), proof_candidate, result, max_correction_iteration, verbose)
+                proof = retry_until_success(
+                    client,
+                    lean_client,
+                    proof_state.hypothesis_as_code(hyptotheses_number),
+                    proof_candidate,
+                    result,
+                    max_correction_iteration,
+                    verbose,
+                )
                 if proof:
                     return proof
         cnt += 1
@@ -63,7 +71,15 @@ def iterate_until_valid_final_proof(
             ):
                 return proof_candidate
             else:
-                proof = retry_until_success(client, lean_client, proof_state.get_theorem_code(), proof_candidate, result, max_correction_iteration, verbose)
+                proof = retry_until_success(
+                    client,
+                    lean_client,
+                    proof_state.get_theorem_code(),
+                    proof_candidate,
+                    result,
+                    max_correction_iteration,
+                    verbose,
+                )
                 if proof:
                     return proof
         cnt += 1
@@ -86,7 +102,13 @@ def prove_theorem_via_hypotheses_search(
     valid_proofs = []
     for i in range(len(proof_state.theoretical_hypotheses)):
         proof = iterate_until_valid_proof(
-            proof_state, i, api_client, lean_client, max_iteration_hypotheses_proof, max_correction_iteration_hypotheses_proof, verbose
+            proof_state,
+            i,
+            api_client,
+            lean_client,
+            max_iteration_hypotheses_proof,
+            max_correction_iteration_hypotheses_proof,
+            verbose,
         )
         if proof:
             proof_state.proven_hypotheses.append(
@@ -105,18 +127,29 @@ def prove_theorem_via_hypotheses_search(
         "\033[33mIn total ",
         len(proof_state.proven_hypotheses),
         "hypotheses proven from initially ",
-        str(len(proof_state.theoretical_hypotheses)
-        + len(proof_state.proven_hypotheses))
+        str(
+            len(proof_state.theoretical_hypotheses) + len(proof_state.proven_hypotheses)
+        )
         + " available ones\033[0m",
     )
     return proof_state
 
 
 def find_final_proof(
-    proof_state: ProofSearchState, api_client, lean_client, max_iteration_final_proof=1, max_iternation_correction_proof=1, verbose=False
+    proof_state: ProofSearchState,
+    api_client,
+    lean_client,
+    max_iteration_final_proof=1,
+    max_iternation_correction_proof=1,
+    verbose=False,
 ):
     proof = iterate_until_valid_final_proof(
-        proof_state, api_client, lean_client, max_iteration_final_proof,max_iternation_correction_proof, verbose
+        proof_state,
+        api_client,
+        lean_client,
+        max_iteration_final_proof,
+        max_iternation_correction_proof,
+        verbose,
     )
     if proof:
         proof_state.proof = proof_state.build_final_proof(proof)
@@ -124,12 +157,14 @@ def find_final_proof(
 
 
 def prove_theorem(
-    name: str, hypotheses: list[str], goal: str, 
+    name: str,
+    hypotheses: list[str],
+    goal: str,
     max_iteration_hypotheses_proof=1,
     max_correction_iteration_hypotheses_proof=1,
-    max_iteration_final_proof=1, 
+    max_iteration_final_proof=1,
     max_correction_iteration_final_proof=1,
-    verbose=False
+    verbose=False,
 ) -> ProofSearchState:
     """
     Attempts to prove a theorem using the ProofSearchState.
@@ -147,9 +182,21 @@ def prove_theorem(
     claude_client = Client()
 
     prove_theorem_via_hypotheses_search(
-        proof_state, claude_client, lean_client, max_iteration_hypotheses_proof, max_correction_iteration_hypotheses_proof, verbose=verbose
+        proof_state,
+        claude_client,
+        lean_client,
+        max_iteration_hypotheses_proof,
+        max_correction_iteration_hypotheses_proof,
+        verbose=verbose,
     )
-    find_final_proof(proof_state, claude_client, lean_client, max_iteration_final_proof, max_correction_iteration_final_proof, verbose)
+    find_final_proof(
+        proof_state,
+        claude_client,
+        lean_client,
+        max_iteration_final_proof,
+        max_correction_iteration_final_proof,
+        verbose,
+    )
     return proof_state
 
 
@@ -158,7 +205,7 @@ def main(name, hypothesis, goal):
 
     try:
         # proof_state = prove_theorem(name, hypothesis, goal, 1,1,1,1, True)
-        proof_state = prove_theorem(name, hypothesis, goal, 2,3,3,4, True)
+        proof_state = prove_theorem(name, hypothesis, goal, 2, 3, 3, 4, True)
         if proof_state.proof:
             print(f"Proof found for theorem {name}:")
             print(proof_state.proof)

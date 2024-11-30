@@ -4,6 +4,7 @@ from hammer.main import iterate_until_valid_proof
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState
 
+
 class TestIterateUntilValidProof(unittest.TestCase):
     def setUp(self):
         # Setup common test data
@@ -30,8 +31,7 @@ by_cases h : a >= b
 · simp [Nat.sub_eq_zero_of_le (le_of_not_ge h)]
     ```
         """
-        
-        
+
         # Create a proof state
         proof_state = ProofSearchState(name, hypotheses, goal)
         proof_state.theoretical_hypotheses = [
@@ -49,6 +49,7 @@ by_cases h : a >= b
         # Check if a valid proof candidate was returned
         self.assertIsNotNone(proof_candidate)
         print("Proof candidate:", proof_candidate)
+
 
 if __name__ == "__main__":
     unittest.main()

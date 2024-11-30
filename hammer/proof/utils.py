@@ -17,6 +17,7 @@ def extract_lean_blocks(text: str) -> list[str]:
             blocks.append(code)
     return blocks
 
+
 def extract_proof_from_lean_code(lean_code: str) -> str:
     """
     Extracts just the proof part from lean code that may include the theorem definition.
@@ -30,14 +31,15 @@ def extract_proof_from_lean_code(lean_code: str) -> str:
             return parts[1]
     return lean_code
 
+
 def extract_proof_from_text(text: str) -> list[str]:
     """
     Extracts lean code blocks from text and returns just the proof parts.
     Combines extract_lean_blocks() and extract_proof_from_lean_code().
-    
+
     Args:
         text: String containing lean code blocks marked with ```lean ... ```
-        
+
     Returns:
         List of proof strings extracted from the lean code blocks
     """

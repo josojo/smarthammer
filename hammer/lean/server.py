@@ -46,7 +46,7 @@ class LeanServer:
             )  # [1:-1] removes single quotes
 
         command_array = command.split("\\n")
-        command_array = [cmd for cmd in command_array if cmd.strip() != '']
+        command_array = [cmd for cmd in command_array if cmd.strip() != ""]
         for i, command in enumerate(command_array):
             if verbose:
                 print(f"\033[34mSending {i}-th line {command}\033[0m")
