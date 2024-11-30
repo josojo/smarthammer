@@ -36,7 +36,7 @@ def retry_until_success(
         hypothesis_lines = theorem_code.count("\n") + 1
 
         # Check if error line is in hypothesis section
-        if line_number is not None and line_number < hypothesis_lines:
+        if line_number is not None and line_number <= hypothesis_lines:
             raise Exception(
                 f"Error occurred in hypothesis section (line {line_number}), cannot fix"
             )

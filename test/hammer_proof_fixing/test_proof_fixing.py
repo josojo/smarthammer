@@ -42,7 +42,13 @@ by_cases h : a >= b
 
         # Test the function
         proof_candidate = iterate_until_valid_proof(
-            proof_state, 0, client, self.lean_client, max_iteration=1, verbose=True
+            proof_state,
+            0,
+            client,
+            self.lean_client,
+            max_iteration=1,
+            max_correction_iteration=2,
+            verbose=True,
         )
         assert proof_candidate is not None
 
