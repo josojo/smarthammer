@@ -4,7 +4,8 @@ import json
 import os
 import pexpect
 from dotenv import load_dotenv
-
+import logging
+logger = logging.getLogger(__name__)
 
 class LeanServer:
     """Server class for managing interactions with a Lean REPL instance."""
@@ -51,10 +52,10 @@ class LeanServer:
         command_array = command.split("\\n")
         command_array = [cmd for cmd in command_array if cmd.strip() != ""]
         if verbose:
-            print("Sending the following commands to the REPL:")
+            logger.debug("Sending the following commands to the REPL:")
         for i, command in enumerate(command_array):
             if verbose:
-                print(f"{i}-th line: \033[34m {command}\033[0m")
+                logger.debug(f"{i}-th line: \033[34m {command}\033[0m")
             self.proc.sendline(command)
             self.proc.expect_exact(command + "\r\n")
         self.proc.sendline()
@@ -64,16 +65,16 @@ class LeanServer:
                 self.proc.expect(r'env": \d+\}', timeout=100)
                 output = self.proc.before + self.proc.match.group()
                 if verbose:
-                    print(
+                    logger.debug(
                         f"Receiving the following simulation output\n \033[35m{output}\033[0m"
                     )
                 return json.loads(output)
             except pexpect.exceptions.EOF:
                 # Print the buffer contents even if expect times out
-                print("EOF. Current buffer contents:")
-                print(self.proc.before)
+                logger.error("EOF. Current buffer contents:")
+                logger.error(self.proc.before)
                 raise
         except pexpect.exceptions.TIMEOUT:
-            print("TIMEOUT. Current buffer contents:")
-            print(self.proc.before)
+            logger.error("TIMEOUT. Current buffer contents:")
+            logger.error(self.proc.before)
             raise pexpect.exceptions.TIMEOUT

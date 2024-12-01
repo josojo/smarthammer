@@ -1,5 +1,14 @@
 from .utils import extract_lean_blocks, unicode_escape
+import logging
+logger = logging.getLogger(__name__)
 
+# Configure logging handler if none exists
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 class Hypothesis:
     """Represents a mathematical hypothesis with its name, statement, and proof."""
@@ -71,7 +80,7 @@ class ProofSearchState:
             )
             for h in extract_lean_blocks(response)
         ]
-        print("extracted hy", hypotheses)
+        logger.info("extracted hy", hypotheses)
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
         self.theoretical_hypotheses.extend(hypotheses)
@@ -184,7 +193,7 @@ have np : n ≤ p :=
         response = claude_client.send(total_prompt, verbose)
         proof = extract_lean_blocks(response)[0]
         if verbose:
-            print(f"Proof candidate for final proof is:\n {proof}")
+            logger.debug(f"Proof candidate for final proof is:\n {proof}")
         return proof
 
     def set_proof(self, proof):
