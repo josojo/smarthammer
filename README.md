@@ -49,3 +49,40 @@ or
 ```cmd
 python -m black .
 ```
+
+## Starting the sever
+
+The server relies on redis to manage tasks
+
+```cmd
+brew install redis
+brew services start redis
+```
+
+Starting the worker that executes tasks:
+
+```cmd
+OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python -m hammer.worker
+```
+
+starting the api server to accept requests:
+
+```cmd
+uvicorn hammer.api.server:app --reload
+```
+
+Sending a request:
+
+```cmd
+curl -X POST "http://localhost:8000/prove/" -H "Content-Type: application/json" -d '{
+    "name": "thm1",
+    "hypotheses": ["(n : ℕ)", "(oh0 : 0 < n)"],
+    "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
+}'
+```
+
+To get the status
+
+```cmd
+curl "http://localhost:8000/status/{task_id}"
+```

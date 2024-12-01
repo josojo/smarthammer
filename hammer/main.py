@@ -3,6 +3,7 @@ from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.claude.client import Client
 from hammer.proof.retry import retry_until_success
+from rq import get_current_job
 
 
 def iterate_until_valid_proof(
@@ -100,28 +101,34 @@ def prove_theorem_via_hypotheses_search(
 
     # Try to generate proofs for different numbers of hypotheses
     valid_proofs = []
+    not_valid_formulations = []
     for i in range(len(proof_state.theoretical_hypotheses)):
-        proof = iterate_until_valid_proof(
-            proof_state,
-            i,
-            api_client,
-            lean_client,
-            max_iteration_hypotheses_proof,
-            max_correction_iteration_hypotheses_proof,
-            verbose,
-        )
-        if proof:
-            proof_state.proven_hypotheses.append(
-                Hypothesis(
-                    "p" + str(len(proof_state.proven_hypotheses)),
-                    proof_state.theoretical_hypotheses[i],
-                    proof,
-                )
+        try:
+            proof = iterate_until_valid_proof(
+                proof_state,
+                i,
+                api_client,
+                lean_client,
+                max_iteration_hypotheses_proof,
+                max_correction_iteration_hypotheses_proof,
+                verbose,
             )
-            valid_proofs.append(i)
+            if proof:
+                proof_state.proven_hypotheses.append(
+                    Hypothesis(
+                        "p" + str(len(proof_state.proven_hypotheses)),
+                        proof_state.theoretical_hypotheses[i],
+                        proof,
+                    )
+                )
+                valid_proofs.append(i)
+        except Exception as e:
+            print("Error while proving hypothesis:", e)
+            not_valid_formulations.append(i)
     # Remove the valid proofs from the list
-    valid_proofs.reverse()
-    for i in valid_proofs:
+    # Combine valid and invalid indices and sort in reverse order to safely remove from list
+    indices_to_remove = sorted(valid_proofs + not_valid_formulations, reverse=True)
+    for i in indices_to_remove:
         proof_state.theoretical_hypotheses.pop(i)
     print(
         "\033[33mIn total ",
@@ -156,27 +163,23 @@ def find_final_proof(
     return proof_state.proof
 
 
-def prove_theorem(
-    name: str,
-    hypotheses: list[str],
-    goal: str,
-    max_iteration_hypotheses_proof=1,
-    max_correction_iteration_hypotheses_proof=1,
-    max_iteration_final_proof=1,
-    max_correction_iteration_final_proof=1,
-    verbose=False,
-) -> ProofSearchState:
-    """
-    Attempts to prove a theorem using the ProofSearchState.
+def prove_theorem(**kwargs):
+    # Extract the log capture if it exists
+    log_capture = kwargs.pop("_log_capture", None)
 
-    Args:
-        name: Name of the theorem
-        hypothesis: List of hypothesis statements
-        goal: The goal to prove
+    name = kwargs["name"]
+    hypotheses = kwargs["hypotheses"]
+    goal = kwargs["goal"]
+    max_iteration_hypotheses_proof = kwargs["max_iteration_hypotheses_proof"]
+    max_correction_iteration_hypotheses_proof = kwargs[
+        "max_correction_iteration_hypotheses_proof"
+    ]
+    max_iteration_final_proof = kwargs["max_iteration_final_proof"]
+    max_correction_iteration_final_proof = kwargs[
+        "max_correction_iteration_final_proof"
+    ]
+    verbose = kwargs["verbose"]
 
-    Returns:
-        ProofSearchState containing the proof attempt
-    """
     lean_client = LeanServer(True)
     proof_state = ProofSearchState(name, hypotheses, goal)
     claude_client = Client()
@@ -197,6 +200,14 @@ def prove_theorem(
         max_correction_iteration_final_proof,
         verbose,
     )
+
+    # If we have a log capture, store the logs in the job's meta
+    if log_capture:
+        current_job = get_current_job()
+        if current_job:
+            current_job.meta["logs"] = log_capture.getvalue()
+            current_job.save_meta()
+
     return proof_state
 
 
