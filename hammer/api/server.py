@@ -31,10 +31,11 @@ redis_pubsub = Redis(host="localhost", port=6379)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",     # React default port
-        "http://localhost:5173",     # Vite default port
+        "http://localhost:3000",  # React default port
+        "http://127.0.0.1:3000",  # React default port (alternative URL)
+        "http://localhost:5173",  # Vite default port
         "http://127.0.0.1:5173",
-        "http://your-production-domain.com"
+        "http://your-production-domain.com",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
@@ -109,6 +110,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "task_id": task_id,  # Pass task_id to the worker
         },
         job_id=task_id,
+        result_ttl=3600,  # Store finished jobs for 1 hour
     )
 
     task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
@@ -117,12 +119,14 @@ async def create_proof_task(theorem: TheoremRequest):
 
 @app.get("/status/{task_id}", response_model=TaskStatus)
 async def get_task_status(task_id: str):
-    if task_id not in task_status:
-        raise HTTPException(status_code=404, detail="Task not found")
-
+    # Get the job first
     job = task_queue.fetch_job(task_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Task not found in queue")
+
+    # Initialize task_status if it doesn't exist
+    if task_id not in task_status:
+        task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
 
     # Get the logs from the job's meta if available
     logs = job.meta.get("logs", "") if job.meta else ""
@@ -130,10 +134,20 @@ async def get_task_status(task_id: str):
     if job.is_finished:
         result = job.result
         if isinstance(result, ProofSearchState):
+            # Safely convert proven_hypotheses to dictionaries
+            proven_hypotheses = []
+            for h in result.proven_hypotheses:
+                if hasattr(h, "__dict__"):
+                    # If it's an object with attributes, convert to dict
+                    proven_hypotheses.append(vars(h))
+                else:
+                    # If it's a simple type, use it as is
+                    proven_hypotheses.append(h)
+
             result_dict = {
                 "proof": result.proof,
                 "theoretical_hypotheses": result.theoretical_hypotheses,
-                "proven_hypotheses": [asdict(h) for h in result.proven_hypotheses],
+                "proven_hypotheses": proven_hypotheses,
                 "name": result.name,
                 "goal": result.goal,
             }
