@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class LeanServer:
     """Server class for managing interactions with a Lean REPL instance."""
 
-    def __init__(self, initiate_mathlib=False):
+    def __init__(self, code_for_env_0="import Mathlib"):
         load_dotenv()
         path_to_repl = os.getenv("REPLPATH")
         if not path_to_repl:
@@ -21,10 +21,8 @@ class LeanServer:
         self.proc = pexpect.spawn(
             "lake env ../../.lake/build/bin/repl", cwd=path_to_repl, encoding="utf-8"
         )
-        if initiate_mathlib:
-            # setup the mathlib import, as this takes the longest in any simulation
-            # and is "always" needed
-            self.run_code("import Mathlib")
+        if code_for_env_0:
+            self.run_code(code_for_env_0)
 
     def run_code(self, code, env=None, verbose=False):
         """Execute Lean code in the REPL.

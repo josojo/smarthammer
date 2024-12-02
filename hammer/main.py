@@ -197,7 +197,7 @@ def prove_theorem(**kwargs):
     ]
     verbose = kwargs["verbose"]
 
-    lean_client = LeanServer(True)
+    lean_client = LeanServer(kwargs["code_for_env_0"])
     proof_state = ProofSearchState(name, hypotheses, goal)
     claude_client = Client()
 

@@ -60,7 +60,7 @@ class TestHammer(unittest.TestCase):
         """
         # Create mock clients
         self.mock_api_client = Client([api_output_1, api_output_2])
-        self.mock_lean_client = LeanServer()
+        self.mock_lean_client = LeanServer("")
 
         # Create a ProofSearchState instance
         self.proof_state = ProofSearchState(self.name, self.hypotheses, self.goal)

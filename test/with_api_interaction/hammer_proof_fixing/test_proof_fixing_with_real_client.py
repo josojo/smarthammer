@@ -9,7 +9,7 @@ from hammer.proof.proof import ProofSearchState
 class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
     def setUp(self):
         # Setup common test data
-        self.lean_client = LeanServer(initiate_mathlib=True)
+        self.lean_client = LeanServer()
 
     @pytest.mark.manual
     def test_iterate_until_valid_proof_successful(self):

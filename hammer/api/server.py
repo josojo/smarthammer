@@ -75,6 +75,7 @@ class TheoremRequest(BaseModel):
     max_iteration_final_proof: int = 1
     max_correction_iteration_final_proof: int = 1
     verbose: bool = True
+    code_for_env_0: str | None = "import Mathlib"
 
 
 class TaskStatus(BaseModel):
@@ -103,6 +104,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "name": theorem.name,
             "hypotheses": theorem.hypotheses,
             "goal": theorem.goal,
+            "code_for_env_0": theorem.code_for_env_0,
             "max_iteration_hypotheses_proof": theorem.max_iteration_hypotheses_proof,
             "max_correction_iteration_hypotheses_proof": theorem.max_correction_iteration_hypotheses_proof,
             "max_iteration_final_proof": theorem.max_iteration_final_proof,
@@ -187,7 +189,7 @@ async def stream_logs(task_id: str):
 
                 message = pubsub.get_message(timeout=1.0)
                 if message and message["type"] == "message":
-                    log_message = message['data'].decode('utf-8')
+                    log_message = message["data"].decode("utf-8")
                     # Append the new log message to task_status
                     if task_id in task_status:
                         task_status[task_id]["logs"] += log_message + "\n"
