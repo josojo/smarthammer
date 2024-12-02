@@ -176,9 +176,7 @@ def prove_theorem(**kwargs):
         log_handler.setLevel(logging.DEBUG)
 
         # Create formatter and add it to the handler
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter('%(message)s')
         log_handler.setFormatter(formatter)
 
         # Add handler to root logger
