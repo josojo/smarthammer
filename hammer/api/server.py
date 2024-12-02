@@ -188,7 +188,7 @@ async def get_pending_tasks():
 
     # Get queued jobs
     pending_jobs = task_queue.get_jobs()
-    
+
     # Get failed jobs
     failed_registry = task_queue.failed_job_registry
     failed_jobs = failed_registry.get_job_ids()
@@ -206,5 +206,5 @@ async def get_pending_tasks():
         "pending_tasks": [job.id for job in pending_jobs],
         "running_tasks": running_jobs,
         "failed_tasks": failed_jobs,
-        "finished_tasks": finished_jobs
+        "finished_tasks": finished_jobs,
     }
