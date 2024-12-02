@@ -13,6 +13,7 @@ import asyncio
 import time
 import logging
 from rq.job import Job
+from fastapi.middleware.cors import CORSMiddleware
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
@@ -25,6 +26,20 @@ task_queue = Queue("theorem_prover", connection=redis_conn)
 
 # Add Redis pubsub connection
 redis_pubsub = Redis(host="localhost", port=6379)
+
+# Add CORS middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",     # React default port
+        "http://localhost:5173",     # Vite default port
+        "http://127.0.0.1:5173",
+        "http://your-production-domain.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 
 def setup_logging():
