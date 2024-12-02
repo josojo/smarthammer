@@ -91,7 +91,8 @@ task_status = {}
 
 @app.post("/prove/", response_model=TaskStatus)
 async def create_proof_task(theorem: TheoremRequest):
-    task_id = str(uuid.uuid4())
+    # Create a task_id that starts with the theorem name
+    task_id = f"{theorem.name}-{uuid.uuid4()}"
 
     # Enqueue the task with the task_id
     job = task_queue.enqueue(
