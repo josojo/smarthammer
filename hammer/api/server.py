@@ -95,6 +95,9 @@ async def create_proof_task(theorem: TheoremRequest):
     # Create a task_id that starts with the theorem name
     task_id = f"{theorem.name}-{uuid.uuid4()}"
 
+    # Initialize task status with empty logs
+    task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
+
     # Enqueue the task with the task_id
     job = task_queue.enqueue(
         prove_theorem,
@@ -113,7 +116,6 @@ async def create_proof_task(theorem: TheoremRequest):
         result_ttl=3600,  # Store finished jobs for 1 hour
     )
 
-    task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
     return TaskStatus(task_id=task_id, status="pending", logs="")
 
 
@@ -130,6 +132,8 @@ async def get_task_status(task_id: str):
 
     # Get the logs from the job's meta if available
     logs = job.meta.get("logs", "") if job.meta else ""
+    logs = task_status[task_id]["logs"]
+    # console.log(logs)
 
     if job.is_finished:
         result = job.result
@@ -185,7 +189,11 @@ async def stream_logs(task_id: str):
 
                 message = pubsub.get_message(timeout=1.0)
                 if message and message["type"] == "message":
-                    yield f"data: {message['data'].decode('utf-8')}\n\n"
+                    log_message = message['data'].decode('utf-8')
+                    # Append the new log message to task_status
+                    if task_id in task_status:
+                        task_status[task_id]["logs"] += log_message + "\n"
+                    yield f"data: {log_message}\n\n"
                 await asyncio.sleep(0.5)
         finally:
             pubsub.unsubscribe()

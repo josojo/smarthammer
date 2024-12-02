@@ -9,7 +9,7 @@ redis_pubsub = Redis(host="localhost", port=6379)
 internal_logger = logging.getLogger("internal")
 
 
-class LogStreamHandler(logging.StreamHandler):
+class LogStreamHandler(logging.Handler):
     def __init__(self, task_id):
         super().__init__()
         self.task_id = task_id
@@ -26,6 +26,7 @@ class LogStreamHandler(logging.StreamHandler):
             "httpcore",
             "httpx",
         ]
+        self.redis_client = Redis(host="localhost", port=6379)
 
     def emit(self, record):
         try:
@@ -35,16 +36,19 @@ class LogStreamHandler(logging.StreamHandler):
             ):
                 return
 
-            log_entry = self.format(record)
+             # Format the log message
+            log_message = self.format(record)
+            
             channel = f"logs:{self.task_id}"
             message = json.dumps(
                 {
                     "timestamp": record.created,
                     "name": record.name,
                     "level": record.levelname,
-                    "message": log_entry,
+                    "message": log_message,
                 }
             )
-            redis_pubsub.publish(channel, message)
-        except Exception as e:
-            self._internal_logger.error(f"Error in LogStreamHandler.emit: {e}")
+            self.redis_client.publish(channel, message)
+            
+        except Exception:
+            self.handleError(record)
