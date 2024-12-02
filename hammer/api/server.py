@@ -6,12 +6,13 @@ from rq import Queue
 import uuid
 import io
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict
 from dataclasses import asdict
 import json
 import asyncio
 import time
 import logging
+from rq.job import Job
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
@@ -170,3 +171,40 @@ async def test_logs(task_id: str):
     message = json.dumps({"timestamp": time.time(), "message": "Test log message"})
     result = redis_pubsub.publish(channel, message)
     return {"published_to": channel, "receivers": result}
+
+
+@app.get("/pending-tasks/", response_model=Dict[str, List[str]])
+async def get_pending_tasks():
+    """
+    Returns a dictionary containing:
+    - pending_tasks: List of task IDs that are waiting to be executed
+    - running_tasks: List of task IDs that are currently being executed
+    - failed_tasks: List of task IDs that failed
+    - finished_tasks: List of task IDs that completed successfully
+    """
+    # Get all jobs from the queue
+    registry = task_queue.started_job_registry
+    running_jobs = registry.get_job_ids()
+
+    # Get queued jobs
+    pending_jobs = task_queue.get_jobs()
+    
+    # Get failed jobs
+    failed_registry = task_queue.failed_job_registry
+    failed_jobs = failed_registry.get_job_ids()
+
+    # Get finished jobs
+    finished_registry = task_queue.finished_job_registry
+    finished_jobs = finished_registry.get_job_ids()
+
+    logger.debug(f"Found running jobs: {running_jobs}")
+    logger.debug(f"Found pending jobs: [job.id for job in pending_jobs]")
+    logger.debug(f"Found failed jobs: {failed_jobs}")
+    logger.debug(f"Found finished jobs: {finished_jobs}")
+
+    return {
+        "pending_tasks": [job.id for job in pending_jobs],
+        "running_tasks": running_jobs,
+        "failed_tasks": failed_jobs,
+        "finished_tasks": finished_jobs
+    }
