@@ -113,7 +113,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "task_id": task_id,  # Pass task_id to the worker
         },
         job_id=task_id,
-        result_ttl=3600,  # Store finished jobs for 1 hour
+        result_ttl=86400,  # Store finished jobs for 24 hours
     )
 
     return TaskStatus(task_id=task_id, status="pending", logs="")
