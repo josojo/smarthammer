@@ -1,11 +1,14 @@
 import sys
+from hammer.api.logging import LogStreamHandler
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.claude.client import Client
 from hammer.proof.retry import retry_until_success
 from rq import get_current_job
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def iterate_until_valid_proof(
     proof_state: ProofSearchState,
@@ -97,8 +100,8 @@ def prove_theorem_via_hypotheses_search(
     verbose=False,
 ):
     proof_state.add_hypotheses(api_client, verbose)
-    logger.info("Added hypotheses")
-    logger.info(proof_state.theoretical_hypotheses)
+    logger.debug("Added hypotheses")
+    logger.debug(f"Theoretical hypotheses: {proof_state.theoretical_hypotheses}")
 
     # Try to generate proofs for different numbers of hypotheses
     valid_proofs = []
@@ -124,7 +127,7 @@ def prove_theorem_via_hypotheses_search(
                 )
                 valid_proofs.append(i)
         except Exception as e:
-            logger.error("Error while proving hypothesis:", e)
+            logger.error(f"Error while proving hypothesis: {e}")
             not_valid_formulations.append(i)
     # Remove the valid proofs from the list
     # Combine valid and invalid indices and sort in reverse order to safely remove from list
@@ -132,13 +135,8 @@ def prove_theorem_via_hypotheses_search(
     for i in indices_to_remove:
         proof_state.theoretical_hypotheses.pop(i)
     logger.info(
-        "\033[33mIn total ",
-        len(proof_state.proven_hypotheses),
-        "hypotheses proven from initially ",
-        str(
-            len(proof_state.theoretical_hypotheses) + len(proof_state.proven_hypotheses)
-        )
-        + " available ones\033[0m",
+        f"In total {len(proof_state.proven_hypotheses)} hypotheses proven from initially "
+        f"{len(proof_state.theoretical_hypotheses) + len(proof_state.proven_hypotheses)} available ones"
     )
     return proof_state
 
@@ -165,9 +163,29 @@ def find_final_proof(
 
 
 def prove_theorem(**kwargs):
-    # Remove StringIO log capture
-    task_id = kwargs.pop("task_id", None)  # Get task_id instead
-    
+    task_id = kwargs.pop("task_id", None)
+
+    # Set up logging handler for this task if task_id is provided
+    if task_id:
+        # Set root logger to DEBUG level
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+
+        # Create and configure the LogStreamHandler
+        log_handler = LogStreamHandler(task_id)
+        log_handler.setLevel(logging.DEBUG)
+
+        # Create formatter and add it to the handler
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        log_handler.setFormatter(formatter)
+
+        # Add handler to root logger
+        root_logger.addHandler(log_handler)
+
+        logger.debug(f"Starting proof for task {task_id}")
+
     name = kwargs["name"]
     hypotheses = kwargs["hypotheses"]
     goal = kwargs["goal"]

@@ -1,14 +1,16 @@
 from .utils import extract_lean_blocks, unicode_escape
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Configure logging handler if none exists
 if not logger.handlers:
     handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+
 
 class Hypothesis:
     """Represents a mathematical hypothesis with its name, statement, and proof."""
@@ -52,7 +54,7 @@ class ProofSearchState:
             f"You are a math expert and you want to proof the following lean theorem:\n"
         )
         prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.original_hypotheses) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
-        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block."
+        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name, followed by colon, as in the following examples."
         examples = f"""Examples:
         Example 1:
         Input: {prompt_part_1} ```lean theorem mathd_numbertheory_457_1 (n : ℕ)(h₁ : 80325∣ (n !) ) : 17 ≤ n ```. {prompt_part_3}
@@ -80,7 +82,6 @@ class ProofSearchState:
             )
             for h in extract_lean_blocks(response)
         ]
-        logger.info("extracted hy", hypotheses)
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
         self.theoretical_hypotheses.extend(hypotheses)

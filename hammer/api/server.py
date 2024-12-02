@@ -15,6 +15,7 @@ import logging
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
+from hammer.api.logging import LogStreamHandler, redis_pubsub
 
 app = FastAPI()
 # Configure Redis connection and queue
@@ -24,47 +25,30 @@ task_queue = Queue("theorem_prover", connection=redis_conn)
 # Add Redis pubsub connection
 redis_pubsub = Redis(host="localhost", port=6379)
 
+
 def setup_logging():
     # Configure root logger
     logging.basicConfig(
         level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    
+
     # Create internal logger for handler operations
     internal_logger = logging.getLogger("internal")
     internal_logger.setLevel(logging.DEBUG)
-    
+
     # Create console handler for internal logger
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     console_handler.setFormatter(formatter)
     internal_logger.addHandler(console_handler)
 
+
 setup_logging()
 logger = logging.getLogger(__name__)
-
-class LogStreamHandler(logging.StreamHandler):
-    def __init__(self, task_id):
-        super().__init__()
-        self.task_id = task_id
-        self._internal_logger = logging.getLogger("internal")
-        self._internal_logger.debug(f"Initialized LogStreamHandler for task: {task_id}")
-
-    def emit(self, record):
-        # Skip logs from the streaming endpoint itself to avoid loops
-        if record.name == "internal":
-            return
-            
-        log_entry = self.format(record)
-        channel = f"logs:{self.task_id}"
-        message = json.dumps({
-            'timestamp': record.created,
-            'message': log_entry
-        })
-        self._internal_logger.debug(f"Publishing to channel {channel}: {message}")
-        redis_pubsub.publish(channel, message)
 
 
 class TheoremRequest(BaseModel):
@@ -93,12 +77,7 @@ task_status = {}
 async def create_proof_task(theorem: TheoremRequest):
     task_id = str(uuid.uuid4())
 
-    # Replace StringIO with custom handler
-    log_handler = LogStreamHandler(task_id)
-    log_handler.setLevel(logging.DEBUG)
-    logging.getLogger().addHandler(log_handler)
-
-    # Enqueue the task with the log capture
+    # Enqueue the task with the task_id
     job = task_queue.enqueue(
         prove_theorem,
         kwargs={
@@ -110,13 +89,12 @@ async def create_proof_task(theorem: TheoremRequest):
             "max_iteration_final_proof": theorem.max_iteration_final_proof,
             "max_correction_iteration_final_proof": theorem.max_correction_iteration_final_proof,
             "verbose": theorem.verbose,
-            "_log_capture": io.StringIO(),
+            "task_id": task_id,  # Pass task_id to the worker
         },
         job_id=task_id,
     )
 
     task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
-
     return TaskStatus(task_id=task_id, status="pending", logs="")
 
 
@@ -160,12 +138,12 @@ async def get_task_status(task_id: str):
 @app.get("/logs/{task_id}")
 async def stream_logs(task_id: str):
     logger.debug(f"Starting log stream for task: {task_id}")
-    
+
     async def event_stream():
         pubsub = redis_pubsub.pubsub()
         channel = f"logs:{task_id}"
         pubsub.subscribe(channel)
-        
+
         try:
             while True:
                 # Check if task is complete
@@ -175,26 +153,20 @@ async def stream_logs(task_id: str):
                     break
 
                 message = pubsub.get_message(timeout=1.0)
-                if message and message['type'] == 'message':
+                if message and message["type"] == "message":
                     yield f"data: {message['data'].decode('utf-8')}\n\n"
                 await asyncio.sleep(0.5)
         finally:
             pubsub.unsubscribe()
             pubsub.close()
 
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream"
-    )
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.get("/test-logs/{task_id}")
 async def test_logs(task_id: str):
     """Test endpoint to verify Redis pub/sub"""
     channel = f"logs:{task_id}"
-    message = json.dumps({
-        'timestamp': time.time(),
-        'message': 'Test log message'
-    })
+    message = json.dumps({"timestamp": time.time(), "message": "Test log message"})
     result = redis_pubsub.publish(channel, message)
     return {"published_to": channel, "receivers": result}

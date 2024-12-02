@@ -65,6 +65,7 @@ Starting the worker that executes tasks:
 OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python -m hammer.worker
 ```
 
+Setting the OBJC_DISABLE_INITIALIZE_FORK_SAFETY variable is required for macOS to work smoothly
 starting the api server to accept requests:
 
 ```cmd
@@ -85,4 +86,10 @@ To get the status
 
 ```cmd
 curl "http://localhost:8000/status/{task_id}"
+```
+
+And to get the streamed progress:
+
+```cmd
+curl -N http://localhost:8000/logs/{task_id}
 ```

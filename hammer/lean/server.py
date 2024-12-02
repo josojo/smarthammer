@@ -5,7 +5,9 @@ import os
 import pexpect
 from dotenv import load_dotenv
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class LeanServer:
     """Server class for managing interactions with a Lean REPL instance."""
