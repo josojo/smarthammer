@@ -25,7 +25,8 @@ def extract_proof_from_lean_code(lean_code: str) -> str:
     Otherwise returns the original code.
     """
     # Split everything by the last theorem definition, as this will contain our proof:
-    lean_code = "theorem" + lean_code.split("theorem")[-1]
+    if "theorem" in lean_code:
+        lean_code = "theorem " +  lean_code.split("theorem")[-1]
     # Split on := by to get everything after the theorem definition
     if lean_code.strip().startswith("theorem"):
         parts = lean_code.split(":= by", 1)  # Split only on first occurrence

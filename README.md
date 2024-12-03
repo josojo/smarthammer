@@ -30,6 +30,7 @@ and for running only one test:
 
 ```cmd
 pytest -qs test/hammer_e2e_wo_api/test_hammer.py
+test/hammer_proof_fixing/test_iterate_until_successful.py
 ```
 
 for running manual tests:
