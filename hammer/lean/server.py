@@ -21,7 +21,7 @@ class LeanServer:
         self.proc = pexpect.spawn(
             "lake env ../../.lake/build/bin/repl", cwd=path_to_repl, encoding="utf-8"
         )
-        if code_for_env_0: 
+        if code_for_env_0:
             self.run_code(code_for_env_0)
 
     def run_code(self, code, env=None, verbose=False):
