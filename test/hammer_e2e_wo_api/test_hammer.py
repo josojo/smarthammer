@@ -11,7 +11,7 @@ from hammer.proof.proof import ProofSearchState
 class TestHammer(unittest.TestCase):
     def setUp(self):
         # Setup common test data
-        self.lean_client = LeanServer(initiate_mathlib=True)
+        self.lean_client = LeanServer()
 
         # Create a ProofSearchState instance
 
@@ -110,9 +110,9 @@ have h5 : g = 1 := p4 g h4
 exact h5
 ```
 """
-
+        previous_lean_code = "import Mathlib\n"
         # create a proof state
-        proof_state = ProofSearchState(name, hypotheses, goal)
+        proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
 
         # Create mock clients
         client = Client(

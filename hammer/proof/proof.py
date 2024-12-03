@@ -34,9 +34,10 @@ class Hypothesis:
 
 
 class ProofSearchState:
-    def __init__(self, name, hypotheses, goal, nl_proof=None):
+    def __init__(self, name, hypotheses, previous_code, goal, nl_proof=None):
         self.name = name
         self.original_hypotheses = hypotheses
+        self.previous_code = previous_code
         self.goal = goal
         self.theoretical_hypotheses = []
         self.proven_hypotheses = []
@@ -54,7 +55,7 @@ class ProofSearchState:
             f"You are a math expert and you want to proof the following lean theorem:\n"
         )
         prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.original_hypotheses) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
-        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name, followed by colon, as in the following examples."
+        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name as in the following examples."
         examples = f"""Examples:
         Example 1:
         Input: {prompt_part_1} ```lean theorem mathd_numbertheory_457_1 (n : ℕ)(h₁ : 80325∣ (n !) ) : 17 ≤ n ```. {prompt_part_3}
@@ -93,6 +94,8 @@ class ProofSearchState:
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
         prompt_part_2 = (
             "```lean\n"
+            + self.previous_code
+            + "\n"
             + self.hypothesis_as_code(number_of_hypotheses)
             + f" {starting_code}\n```.\n"
         )
@@ -102,7 +105,7 @@ class ProofSearchState:
         examples = f"""
 Examples:
 Example 1:
-Input: {prompt_part_1} ```lean\n theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
+Input: {prompt_part_1} ```lean\n theorem p \n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
 Output: 
 ```lean
 -- Apply h to get first equation
@@ -156,7 +159,9 @@ have np : n ≤ p :=
 
         code = self.get_theorem_code()
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
-        prompt_part_2 = "```lean " + code + f" {starting_code}```\n"
+        prompt_part_2 = (
+            "```lean " + self.previous_code + "\n" + code + f" {starting_code}```\n"
+        )
         prompt_part_3 = (
             f"Complete the proof and put only the proof into ```lean ``` block.\n"
         )

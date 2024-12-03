@@ -4,6 +4,7 @@ from hammer.proof.utils import extract_proof_from_text
 def retry_until_success(
     api_client,
     lean_client,
+    previous_code,
     theorem_code,
     ans_code,
     result,
@@ -15,7 +16,7 @@ def retry_until_success(
             msg for msg in result.get("messages", []) if msg.get("severity") == "error"
         ]
         first_error = error_messages[0] if error_messages else None
-        prompt = f"The following proof \n```lean4 \n {theorem_code}{ans_code}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+        prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
         response = api_client.send(prompt, verbose)
         ans_code = extract_proof_from_text(response)[0]
         code = theorem_code + ans_code

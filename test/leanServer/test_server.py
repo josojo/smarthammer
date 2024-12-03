@@ -4,7 +4,7 @@ from hammer.lean.server import LeanServer
 
 class TestLeanServer(unittest.TestCase):
     def setUp(self):
-        self.server = LeanServer()
+        self.server = LeanServer(None)
 
     def test_init(self):
         """Test that server initializes properly"""
@@ -33,7 +33,7 @@ class TestLeanServer(unittest.TestCase):
 
 class TestLeanServerWithMathlib(unittest.TestCase):
     def setUp(self):
-        self.server = LeanServer(True)
+        self.server = LeanServer()
 
     def test_init(self):
         """Test that server initializes properly"""

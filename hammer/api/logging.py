@@ -36,9 +36,9 @@ class LogStreamHandler(logging.Handler):
             ):
                 return
 
-             # Format the log message
+            # Format the log message
             log_message = self.format(record)
-            
+
             channel = f"logs:{self.task_id}"
             message = json.dumps(
                 {
@@ -49,6 +49,6 @@ class LogStreamHandler(logging.Handler):
                 }
             )
             self.redis_client.publish(channel, message)
-            
+
         except Exception:
             self.handleError(record)

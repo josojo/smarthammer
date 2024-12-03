@@ -9,16 +9,16 @@ from hammer.proof.retry import retry_until_success
 class TestIterateUntilValidProof(unittest.TestCase):
     def setUp(self):
         # Setup common test data
-        self.lean_client = LeanServer(initiate_mathlib=True)
+        self.lean_client = LeanServer()
 
     def test_iterate_until_valid_proof(self):
         # Mock objects
         name = "thm1"
         hypotheses = ["(n : ℕ)", "(oh0 : 0 < n)"]
         goal = "Nat.gcd (21*n + 4) (14*n + 3) = 1"
-
+        previous_lean_code = "import Mathlib\n"
         # Create a proof state
-        proof_state = ProofSearchState(name, hypotheses, goal)
+        proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.theoretical_hypotheses = [
             "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)",
         ]
@@ -64,6 +64,7 @@ by_cases h : a >= b
         result = retry_until_success(
             client,
             self.lean_client,
+            "import Mathlib",
             proof_state.hypothesis_as_code(0),
             proof_candidate,
             lean_result,
@@ -86,6 +87,7 @@ by_cases h : a >= b
             ans = retry_until_success(
                 client,
                 self.lean_client,
+                "import Mathlib",
                 new_theorem_code,
                 proof_candidate,
                 lean_result,
