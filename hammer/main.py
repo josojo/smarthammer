@@ -39,6 +39,7 @@ def iterate_until_valid_proof(
                 proof = retry_until_success(
                     client,
                     lean_client,
+                    proof_state.previous_code,
                     proof_state.hypothesis_as_code(hyptotheses_number),
                     proof_candidate,
                     result,
@@ -79,6 +80,7 @@ def iterate_until_valid_final_proof(
                 proof = retry_until_success(
                     client,
                     lean_client,
+                    proof_state.previous_code,
                     proof_state.get_theorem_code(),
                     proof_candidate,
                     result,
@@ -186,6 +188,7 @@ def prove_theorem(**kwargs):
 
     name = kwargs["name"]
     hypotheses = kwargs["hypotheses"]
+    codeEnv0 = kwargs["code_for_env_0"]
     goal = kwargs["goal"]
     max_iteration_hypotheses_proof = kwargs["max_iteration_hypotheses_proof"]
     max_correction_iteration_hypotheses_proof = kwargs[
@@ -198,7 +201,7 @@ def prove_theorem(**kwargs):
     verbose = kwargs["verbose"]
 
     lean_client = LeanServer(kwargs["code_for_env_0"])
-    proof_state = ProofSearchState(name, hypotheses, goal)
+    proof_state = ProofSearchState(name, codeEnv0, hypotheses, goal)
     claude_client = Client()
 
     prove_theorem_via_hypotheses_search(

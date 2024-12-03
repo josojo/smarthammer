@@ -34,9 +34,10 @@ class Hypothesis:
 
 
 class ProofSearchState:
-    def __init__(self, name, hypotheses, goal, nl_proof=None):
+    def __init__(self, name, hypotheses, previous_code, goal, nl_proof=None):
         self.name = name
         self.original_hypotheses = hypotheses
+        self.previous_code = previous_code
         self.goal = goal
         self.theoretical_hypotheses = []
         self.proven_hypotheses = []
@@ -93,6 +94,7 @@ class ProofSearchState:
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
         prompt_part_2 = (
             "```lean\n"
+            + self.previous_code + "\n"
             + self.hypothesis_as_code(number_of_hypotheses)
             + f" {starting_code}\n```.\n"
         )
@@ -156,7 +158,7 @@ have np : n ≤ p :=
 
         code = self.get_theorem_code()
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
-        prompt_part_2 = "```lean " + code + f" {starting_code}```\n"
+        prompt_part_2 = "```lean " + self.previous_code + "\n" + code + f" {starting_code}```\n"
         prompt_part_3 = (
             f"Complete the proof and put only the proof into ```lean ``` block.\n"
         )

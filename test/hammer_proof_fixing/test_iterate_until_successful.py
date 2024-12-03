@@ -16,9 +16,9 @@ class TestIterateUntilValidProof(unittest.TestCase):
         name = "thm1"
         hypotheses = ["(n : ℕ)", "(oh0 : 0 < n)"]
         goal = "Nat.gcd (21*n + 4) (14*n + 3) = 1"
-
+        previous_lean_code = "import Mathlib\n"
         # Create a proof state
-        proof_state = ProofSearchState(name, hypotheses, goal)
+        proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.theoretical_hypotheses = [
             "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)",
         ]
@@ -64,6 +64,7 @@ by_cases h : a >= b
         result = retry_until_success(
             client,
             self.lean_client,
+            "import Mathlib",
             proof_state.hypothesis_as_code(0),
             proof_candidate,
             lean_result,
@@ -86,6 +87,7 @@ by_cases h : a >= b
             ans = retry_until_success(
                 client,
                 self.lean_client,
+                "import Mathlib",
                 new_theorem_code,
                 proof_candidate,
                 lean_result,

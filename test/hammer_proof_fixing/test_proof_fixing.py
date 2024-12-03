@@ -33,7 +33,9 @@ by_cases h : a >= b
         """
 
         # Create a proof state
-        proof_state = ProofSearchState(name, hypotheses, goal)
+        previous_lean_code = "import Mathlib\n"
+
+        proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.theoretical_hypotheses = [
             "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)",
         ]

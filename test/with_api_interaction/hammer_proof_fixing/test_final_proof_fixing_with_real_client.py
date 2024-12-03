@@ -18,7 +18,8 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
         goal = "Nat.gcd (21*n + 4) (14*n + 3) = 1"
 
         # Create a proof state
-        proof_state = ProofSearchState(name, hypotheses, goal)
+        previous_lean_code = "import Mathlib\n"
+        proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.proven_hypotheses = [
             Hypothesis("h0", "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None),
             Hypothesis("h1", "(21*n + 4) - (14*n + 3) = 7*n + 1", None),
