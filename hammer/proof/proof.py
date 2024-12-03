@@ -225,7 +225,7 @@ have np : n ≤ p :=
         )
         if goal.endswith("\n"):
             goal = goal.rstrip("\n")
-        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by"
+        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by\n"
         code = unicode_escape(code)
         return code
 

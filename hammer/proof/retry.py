@@ -19,7 +19,7 @@ def retry_until_success(
         prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
         response = api_client.send(prompt, verbose)
         ans_code = extract_proof_from_text(response)[0]
-        code = theorem_code + ans_code
+        code = theorem_code + "\n" + ans_code
         result = lean_client.run_code(code, 0, verbose)
         if isinstance(result, dict) and (
             "messages" not in result
