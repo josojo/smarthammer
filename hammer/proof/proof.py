@@ -55,7 +55,7 @@ class ProofSearchState:
             f"You are a math expert and you want to proof the following lean theorem:\n"
         )
         prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.original_hypotheses) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
-        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name, followed by colon, as in the following examples."
+        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name as in the following examples."
         examples = f"""Examples:
         Example 1:
         Input: {prompt_part_1} ```lean theorem mathd_numbertheory_457_1 (n : ℕ)(h₁ : 80325∣ (n !) ) : 17 ≤ n ```. {prompt_part_3}
@@ -104,7 +104,7 @@ class ProofSearchState:
         examples = f"""
 Examples:
 Example 1:
-Input: {prompt_part_1} ```lean\n theorem p :\n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
+Input: {prompt_part_1} ```lean\n theorem p \n (f : ℤ → ℤ)\n   (h0 : (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b))))\n (h1 : (∀ b, f (0) + (2 * f b) = f (f (b) ) :  (∀ a b, f (2 * a) + (2 * f b) = f (f (a + b) := by\n intro a b\n ```. {prompt_part_3} 
 Output: 
 ```lean
 -- Apply h to get first equation
