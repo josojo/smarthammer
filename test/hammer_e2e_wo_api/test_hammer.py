@@ -6,10 +6,21 @@ from hammer.main import find_final_proof, prove_theorem_via_hypotheses_search
 from hammer.lean.server import LeanServer
 
 from hammer.proof.proof import ProofSearchState
+import logging
 
-
+def setup_test_logging():
+    # Configure logging to output to console with DEBUG level
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        force=True  # This will override any existing logging configuration
+    )
+    
 class TestHammer(unittest.TestCase):
     def setUp(self):
+        # Setup common test data
+        setup_test_logging()
+
         # Setup common test data
         self.lean_client = LeanServer()
 
