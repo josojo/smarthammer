@@ -28,7 +28,7 @@ jobs:
     # Clone REPL first to get the Lean version
     - name: Clone REPL
       run: |
-        git clone https://github.com/josojo/repl.git
+        git clone https://github.com/leanprover-community/repl.git
         
     # Install specific Lean version from REPL's toolchain
     - name: Install specific Lean version
