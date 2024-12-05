@@ -52,7 +52,7 @@ class LeanServer:
             command = (
                 '{ "cmd" : "' + repr(code)[1:-1] + '" }'
             )  # [1:-1] removes single quotes
-
+        logger.debug(f"Sending the following command to the Lean REPL\n \033[35m{command}\033[0m")
         self.proc.sendline(command)
         self.proc.sendline()
         try:
