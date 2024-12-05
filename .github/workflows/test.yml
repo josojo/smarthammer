@@ -24,11 +24,22 @@ jobs:
       run: |
         curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
         echo "$HOME/.elan/bin" >> $GITHUB_PATH
-
-    # Clone and build REPL
-    - name: Clone and build REPL
+        
+    # Clone REPL first to get the Lean version
+    - name: Clone REPL
       run: |
         git clone https://github.com/josojo/repl.git
+        
+    # Install specific Lean version from REPL's toolchain
+    - name: Install specific Lean version
+      run: |
+        cd repl
+        LEAN_VERSION=$(cat lean-toolchain)
+        elan default $LEAN_VERSION
+
+    # Build REPL
+    - name: Build REPL
+      run: |
         cd repl
         lake update
         lake build

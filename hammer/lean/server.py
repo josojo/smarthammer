@@ -20,7 +20,10 @@ class LeanServer:
 
         # stty -icanon is a command to disable canonical mode in the terminal to allow for longer inputs
         self.proc = pexpect.spawn(
-            "/bin/bash -c 'stty -icanon && lake env ../../.lake/build/bin/repl'", cwd=path_to_repl, encoding="utf-8", echo=False
+            "/bin/bash -c 'stty -icanon && lake env ../../.lake/build/bin/repl'",
+            cwd=path_to_repl,
+            encoding="utf-8",
+            echo=False,
         )
         if code_for_env_0:
             self.run_code(code_for_env_0)
@@ -70,4 +73,3 @@ class LeanServer:
             logger.error("TIMEOUT. Current buffer contents:")
             logger.error(self.proc.before)
             raise pexpect.exceptions.TIMEOUT
-
