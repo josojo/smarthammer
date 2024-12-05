@@ -18,8 +18,9 @@ class LeanServer:
         if not path_to_repl:
             raise ValueError("REPLPATH environment variable not set in .env file")
 
+        # stty -icanon is a command to disable canonical mode in the terminal to allow for longer inputs
         self.proc = pexpect.spawn(
-            "lake env ../../.lake/build/bin/repl", cwd=path_to_repl, encoding="utf-8"
+            "/bin/bash -c 'stty -icanon && lake env ../../.lake/build/bin/repl'", cwd=path_to_repl, encoding="utf-8", echo=False
         )
         if code_for_env_0:
             self.run_code(code_for_env_0)
@@ -49,17 +50,8 @@ class LeanServer:
                 '{ "cmd" : "' + repr(code)[1:-1] + '" }'
             )  # [1:-1] removes single quotes
 
-        command_array = command.split("\\n")
-        command_array = [cmd for cmd in command_array if cmd.strip() != ""]
-        if verbose:
-            logger.debug("Sending the following commands to the REPL:")
-        for i, command in enumerate(command_array):
-            if verbose:
-                logger.debug(f"{i}-th line: \033[34m {command}\033[0m")
-            self.proc.sendline(command)
-            self.proc.expect_exact(command + "\r\n")
+        self.proc.sendline(command)
         self.proc.sendline()
-        self.proc.expect_exact("\r\n")
         try:
             try:
                 self.proc.expect(r'env": \d+\}', timeout=100)
@@ -78,3 +70,4 @@ class LeanServer:
             logger.error("TIMEOUT. Current buffer contents:")
             logger.error(self.proc.before)
             raise pexpect.exceptions.TIMEOUT
+
