@@ -13,6 +13,8 @@ class LogStreamHandler(logging.Handler):
     def __init__(self, task_id):
         super().__init__()
         self.task_id = task_id
+        self.redis_conn = Redis(host="localhost", port=6379)
+        # Add back the logging configurations
         self.setLevel(logging.DEBUG)
         self.setFormatter(logging.Formatter("%(message)s"))
         self._internal_logger = logging.getLogger("internal")
@@ -26,29 +28,29 @@ class LogStreamHandler(logging.Handler):
             "httpcore",
             "httpx",
         ]
-        self.redis_client = Redis(host="localhost", port=6379)
 
     def emit(self, record):
         try:
-            # Skip logs from ignored loggers and internal logger
+            # Skip ignored loggers
             if record.name == "internal" or any(
                 record.name.startswith(ignored) for ignored in self.ignored_loggers
             ):
                 return
 
-            # Format the log message
-            log_message = self.format(record)
-
-            channel = f"logs:{self.task_id}"
+            msg = self.format(record)
+            # Publish to pubsub for real-time streaming
             message = json.dumps(
                 {
                     "timestamp": record.created,
                     "name": record.name,
                     "level": record.levelname,
-                    "message": log_message,
+                    "message": msg,
                 }
             )
-            self.redis_client.publish(channel, message)
+            self.redis_conn.publish(f"logs:{self.task_id}", message + "\n")
+
+            # Append to a Redis string for persistent storage
+            self.redis_conn.append(f"logs:{self.task_id}", message + "\n")
 
         except Exception:
             self.handleError(record)

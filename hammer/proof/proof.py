@@ -68,7 +68,7 @@ class ProofSearchState:
            Natural language proof: Substituting a = 0, b = n + 1 gives f (f (n + 1)) = f (0) + 2 * f (n+1). Substituting
             a = 1, b = n gives f (f (n + 1)) = f (2) + 2 * f (n). Hence, f (n + 1) - f (n) = 1/2 * (f (2) - f (0)). Since this holds for all n, f is linear.
            Writing f (n) = Mn + K for arbitrary constants M and K, we and putting into the equations, we get M =2 and K = f (0).
-           Lean4 hypotheses:  ```lean\n lemma lem1 : ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, ```lean\n lemma lem2 : ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, ```lean\n lemma lem3 : ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, ```lean\n lemma lem4 : ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
+           Lean4 hypotheses:  \n```lean\n lemma lem1 : ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, \n```lean\n lemma lem2 : ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, \n```lean\n lemma lem3 : ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, \n```lean\n lemma lem4 : ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
         """
         response = claude_client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose

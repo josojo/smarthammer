@@ -43,11 +43,13 @@ class LeanServer:
             pexpect.exceptions.TIMEOUT: If REPL response times out
         """
         if env is not None:
-            command = json.dumps(
-                {"cmd": code, "env": env},
-            ).replace(
-                "\\\\", "\\"
-            )  # [1:-1] removes single quotes
+            command = (
+                json.dumps(
+                    {"cmd": code, "env": env},
+                )
+                .replace("\\\\", "\\")  # [1:-1] removes single quotes
+                .replace("\\n\\n", "\\n")  # [1:-1] removes double newlines
+            )
         else:
             command = (
                 '{ "cmd" : "' + repr(code)[1:-1] + '" }'

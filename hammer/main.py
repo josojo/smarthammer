@@ -77,18 +77,21 @@ def iterate_until_valid_final_proof(
             ):
                 return proof_candidate
             else:
-                proof = retry_until_success(
-                    client,
-                    lean_client,
-                    proof_state.previous_code,
-                    proof_state.get_theorem_code(),
-                    proof_candidate,
-                    result,
-                    max_correction_iteration,
-                    verbose,
-                )
-                if proof:
-                    return proof
+                try:
+                    proof = retry_until_success(
+                        client,
+                        lean_client,
+                        proof_state.previous_code,
+                        proof_state.get_theorem_code(),
+                        proof_candidate,
+                        result,
+                        max_correction_iteration,
+                        verbose,
+                    )
+                    if proof:
+                        return proof
+                except Exception as e:
+                    logger.error(f"Error while proving final proof: {e}")
         cnt += 1
     return None
 

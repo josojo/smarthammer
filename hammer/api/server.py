@@ -85,17 +85,17 @@ class TaskStatus(BaseModel):
     logs: Optional[str] = None
 
 
-# Store task status and logs
-task_status = {}
-
-
 @app.post("/prove/", response_model=TaskStatus)
 async def create_proof_task(theorem: TheoremRequest):
-    # Create a task_id that starts with the theorem name
-    task_id = f"{theorem.name}-{uuid.uuid4()}"
+    # Create a task_id that starts with the theorem name and includes timestamp
+    timestamp = int(time.time())
+    task_id = f"{theorem.name}-{timestamp}-{uuid.uuid4()}"
 
-    # Initialize task status with empty logs
-    task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
+    # Initialize task status in Redis
+    initial_status = {"status": "pending", "result": None, "logs": ""}
+    redis_conn.set(f"task:{task_id}", json.dumps(initial_status))
+    # Initialize empty log string in Redis
+    redis_conn.set(f"logs:{task_id}", "")
 
     # Enqueue the task with the task_id
     job = task_queue.enqueue(
@@ -110,7 +110,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "max_iteration_final_proof": theorem.max_iteration_final_proof,
             "max_correction_iteration_final_proof": theorem.max_correction_iteration_final_proof,
             "verbose": theorem.verbose,
-            "task_id": task_id,  # Pass task_id to the worker
+            "task_id": task_id,
         },
         job_id=task_id,
         result_ttl=86400,  # Store finished jobs for 24 hours
@@ -126,14 +126,9 @@ async def get_task_status(task_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail="Task not found in queue")
 
-    # Initialize task_status if it doesn't exist
-    if task_id not in task_status:
-        task_status[task_id] = {"status": "pending", "result": None, "logs": ""}
-
-    # Get the logs from the job's meta if available
-    logs = job.meta.get("logs", "") if job.meta else ""
-    logs = task_status[task_id]["logs"]
-    # console.log(logs)
+    # Get logs from Redis
+    logs = redis_conn.get(f"logs:{task_id}")
+    logs = logs.decode("utf-8") if logs else ""
 
     if job.is_finished:
         result = job.result
@@ -192,7 +187,10 @@ async def stream_logs(task_id: str):
                     log_message = message["data"].decode("utf-8")
                     # Append the new log message to task_status
                     if task_id in task_status:
-                        task_status[task_id]["logs"] += log_message + "\n"
+                        logs = redis_pubsub.get(f"logs:{task_id}") or ""
+                        task_status[task_id]["logs"] = (
+                            logs.decode() if isinstance(logs, bytes) else logs
+                        )
                     yield f"data: {log_message}\n\n"
                 await asyncio.sleep(0.5)
         finally:
