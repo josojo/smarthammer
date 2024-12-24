@@ -29,7 +29,7 @@ def retry_until_success(
             raise Exception(
                 f"Error occurred in hypothesis section (line {line_number}), cannot fix"
             )
-        prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {first_error}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+        prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
         response = api_client.send(prompt, verbose)
         ans_code = extract_proof_from_text(response)[0]
         code = theorem_code + "\n" + ans_code
