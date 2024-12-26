@@ -17,7 +17,11 @@ class Client(AIClient):
     def __init__(self, base_url=None):
         self.base_url = base_url or "http://194.26.196.173:21919"
         self.endpoint = f"{self.base_url}/generate"
-        self.name = "DeepSeek"
+        self._name = "DeepSeek"
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def send(self, message, verbose=False):
         """Send a message to DeepSeek and return its response."""

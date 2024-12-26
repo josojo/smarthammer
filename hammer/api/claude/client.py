@@ -16,7 +16,7 @@ class Client(AIClient):
         self.client = anthropic.Anthropic(
             api_key=os.getenv("CLAUDEAPIKEY"),
         )
-        self.name = "claude"
+        self._name = "Claude"
 
     def send(self, message: str, verbose: bool = False) -> str:
         """Send a message to Claude and return its response."""

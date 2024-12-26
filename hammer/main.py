@@ -211,7 +211,8 @@ def prove_theorem(**kwargs):
     proof_state = ProofSearchState(name, hypotheses, codeEnv0, goal)
     claude_client = ClaudeClient()
     deepSeek_client = DeepSeekClient()
-    api_client_for_proofing = [claude_client, deepSeek_client]
+    # api_client_for_proofing = [claude_client, deepSeek_client]
+    api_client_for_proofing = [deepSeek_client]
     api_client_for_hypothesis_search = claude_client
 
     prove_theorem_via_hypotheses_search(

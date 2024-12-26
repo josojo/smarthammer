@@ -14,7 +14,7 @@ class Client(AIClient):
             organization=os.getenv("OPENAI_ORG_ID"),
             project=os.getenv("OPENAI_PROJECT_ID"),
         )
-        self.name = "openai"
+        self._name = "OpenAI"
 
     def send(self, message: str, verbose: bool = False) -> str:
         """Send a message to OpenAI and return its response.

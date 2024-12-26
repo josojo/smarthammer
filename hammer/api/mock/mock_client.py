@@ -14,6 +14,9 @@ class Client:
         self.call_count = 0
         self.return_outputs = return_outputs
 
+    def name(self) -> str:
+        return "MockClient"
+
     def send(self, message, verbose=False):
         """Send a message to Claude and return its response."""
         if verbose:

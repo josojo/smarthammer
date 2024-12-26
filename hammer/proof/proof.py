@@ -77,22 +77,39 @@ class ProofSearchState:
         response = claude_client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
-        hypotheses = [
-            (
-                h.split(":", 1)[1].strip()
-                if h.startswith("\n lemma ")
+        hypotheses = []
+        for h in extract_lean_blocks(response):
+            if (
+                h.startswith("\n lemma ")
                 or h.startswith("\nlemma ")
                 or h.startswith("lemma ")
-                else h
-            )
-            for h in extract_lean_blocks(response)
-        ]
+            ):
+                # Find the first colon that's not inside parentheses/brackets
+                paren_count = 0
+                colon_index = -1
+                for i, char in enumerate(h):
+                    if char in "([{":
+                        paren_count += 1
+                    elif char in ")]}":
+                        paren_count -= 1
+                    elif char == ":" and paren_count == 0:
+                        colon_index = i
+                        break
+
+                if colon_index != -1:
+                    hypothesis = h[colon_index + 1 :].strip()
+                else:
+                    hypothesis = h
+                hypotheses.append(hypothesis)
+            else:
+                hypotheses.append(h)
+
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
         self.theoretical_hypotheses.extend(hypotheses)
 
     def generate_proof_candidate_for_hypotheses(
-        self, claude_client, number_of_hypotheses, starting_code, verbose=False
+        self, client, number_of_hypotheses, starting_code, verbose=False
     ):
         assert number_of_hypotheses < len(self.theoretical_hypotheses)
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
@@ -101,10 +118,11 @@ class ProofSearchState:
             + self.previous_code
             + "\n"
             + self.hypothesis_as_code(number_of_hypotheses)
-            + f" {starting_code}\n```.\n"
+            + f" {starting_code}\n"
         )
         prompt_part_3 = (
-            f"Complete the proof and put only the proof into ```lean ``` block."
+            "```.\n"
+            + f"Complete the proof and put only the proof into ```lean ``` block."
         )
         examples = f"""
 Examples:
@@ -137,12 +155,22 @@ have np : n ≤ p :=
 ⟨p, np, pp⟩
 ```
 """
-        total_prompt = prompt_part_1 + prompt_part_2 + prompt_part_3 + examples
-        response = claude_client.send(total_prompt, verbose)
-        # proof = extract_lean_blocks(response)[0]
+        total_prompt = prompt_part_1 + prompt_part_2
+        if client.name == "Claude":
+            total_prompt += prompt_part_3 + examples
+        logger.debug(f"Talking to {client.name} ")
+        response = client.send(total_prompt, verbose)
+        if client.name == "DeepSeek":
+            if "### Final Proof" in response:
+                response = response.split("### Final Proof")[-1]
+            first_triple_backtick = response.find("```")
+            if first_triple_backtick != -1:
+                if (
+                    response[first_triple_backtick : first_triple_backtick + 7]
+                    != "```lean"
+                ):
+                    response = """```lean\n""" + response
         proof = extract_proof_from_text(response)[0]
-        # if verbose:
-        # print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
         return proof
 
     def get_theorem_code(self):
