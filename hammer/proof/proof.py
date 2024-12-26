@@ -1,4 +1,8 @@
-from .utils import extract_lean_blocks, unicode_escape
+from .utils import (
+    extract_lean_blocks,
+    extract_proof_from_text,
+    unicode_escape,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -135,7 +139,8 @@ have np : n ≤ p :=
 """
         total_prompt = prompt_part_1 + prompt_part_2 + prompt_part_3 + examples
         response = claude_client.send(total_prompt, verbose)
-        proof = extract_lean_blocks(response)[0]
+        # proof = extract_lean_blocks(response)[0]
+        proof = extract_proof_from_text(response)[0]
         # if verbose:
         # print(f"Proof candidate for {number_of_hypotheses} hypotheses:\n {proof}")
         return proof

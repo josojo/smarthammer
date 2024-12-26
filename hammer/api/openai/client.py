@@ -3,19 +3,29 @@
 import os
 from openai import OpenAI
 import json
+from hammer.api.base_client import AIClient
 
 
-class Client:
-    """Client wrapper for Anthropic's Claude API interactions."""
+class Client(AIClient):
+    """Client wrapper for OpenAI API interactions."""
 
     def __init__(self):
         self.client = OpenAI(
             organization=os.getenv("OPENAI_ORG_ID"),
             project=os.getenv("OPENAI_PROJECT_ID"),
         )
+        self.name = "openai"
 
-    def send(self, message, verbose=False):
-        """Send a message to Open ai and return its response."""
+    def send(self, message: str, verbose: bool = False) -> str:
+        """Send a message to OpenAI and return its response.
+
+        Args:
+            message: The message to send to the AI
+            verbose: Whether to log debug information
+
+        Returns:
+            str: The AI's response
+        """
         if verbose:
             print(f"Sending message to Open ai: {message}")
         result = self.client.chat.completions.create(

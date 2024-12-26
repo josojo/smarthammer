@@ -2,7 +2,9 @@ import sys
 from hammer.api.logging import LogStreamHandler
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
-from hammer.api.claude.client import Client
+from hammer.api.claude.client import Client as ClaudeClient
+from hammer.api.deepseek.client import Client as DeepSeekClient
+from hammer.api.base_client import AIClient
 from hammer.proof.retry import retry_until_success
 from rq import get_current_job
 import logging
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__)
 def iterate_until_valid_proof(
     proof_state: ProofSearchState,
     hyptotheses_number,
-    client: Client,
+    client: AIClient,
     lean_client: LeanServer,
     max_iteration=1,
     max_correction_iteration=1,
@@ -54,7 +56,7 @@ def iterate_until_valid_proof(
 
 def iterate_until_valid_final_proof(
     proof_state: ProofSearchState,
-    client: Client,
+    client: AIClient,
     lean_client: LeanServer,
     max_iteration=1,
     max_correction_iteration=1,
@@ -98,13 +100,14 @@ def iterate_until_valid_final_proof(
 
 def prove_theorem_via_hypotheses_search(
     proof_state: ProofSearchState,
-    api_client: Client,
+    api_client_for_hypothesis_search: AIClient,
+    api_client_for_proofing: list[AIClient],
     lean_client: LeanServer,
     max_iteration_hypotheses_proof=1,
     max_correction_iteration_hypotheses_proof=1,
     verbose=False,
 ):
-    proof_state.add_hypotheses(api_client, verbose)
+    proof_state.add_hypotheses(api_client_for_hypothesis_search, verbose)
     logger.debug("Added hypotheses")
     logger.debug(f"Theoretical hypotheses: {proof_state.theoretical_hypotheses}")
 
@@ -112,31 +115,32 @@ def prove_theorem_via_hypotheses_search(
     valid_proofs = []
     not_valid_formulations = []
     for i in range(len(proof_state.theoretical_hypotheses)):
-        try:
-            proof = iterate_until_valid_proof(
-                proof_state,
-                i,
-                api_client,
-                lean_client,
-                max_iteration_hypotheses_proof,
-                max_correction_iteration_hypotheses_proof,
-                verbose,
-            )
-            if proof:
-                proof_state.proven_hypotheses.append(
-                    Hypothesis(
-                        "p" + str(len(proof_state.proven_hypotheses)),
-                        proof_state.theoretical_hypotheses[i],
-                        proof,
-                    )
+        for api_client in api_client_for_proofing:
+            try:
+                proof = iterate_until_valid_proof(
+                    proof_state,
+                    i,
+                    api_client,
+                    lean_client,
+                    max_iteration_hypotheses_proof,
+                    max_correction_iteration_hypotheses_proof,
+                    verbose,
                 )
-                valid_proofs.append(i)
-        except Exception as e:
-            logger.error(f"Error while proving hypothesis: {e}")
-            not_valid_formulations.append(i)
+                if proof:
+                    proof_state.proven_hypotheses.append(
+                        Hypothesis(
+                            "p" + str(len(proof_state.proven_hypotheses)),
+                            proof_state.theoretical_hypotheses[i],
+                            proof,
+                        )
+                    )
+                    valid_proofs.append(i)
+            except Exception as e:
+                logger.error(f"Error while proving hypothesis: {e}")
+                not_valid_formulations.append(i)
     # Remove the valid proofs from the list
     # Combine valid and invalid indices and sort in reverse order to safely remove from list
-    indices_to_remove = sorted(valid_proofs + not_valid_formulations, reverse=True)
+    indices_to_remove = sorted(set(valid_proofs + not_valid_formulations), reverse=True)
     for i in indices_to_remove:
         proof_state.theoretical_hypotheses.pop(i)
     logger.info(
@@ -205,16 +209,21 @@ def prove_theorem(**kwargs):
 
     lean_client = LeanServer(kwargs["code_for_env_0"])
     proof_state = ProofSearchState(name, hypotheses, codeEnv0, goal)
-    claude_client = Client()
+    claude_client = ClaudeClient()
+    deepSeek_client = DeepSeekClient()
+    api_client_for_proofing = [claude_client, deepSeek_client]
+    api_client_for_hypothesis_search = claude_client
 
     prove_theorem_via_hypotheses_search(
         proof_state,
-        claude_client,
+        api_client_for_hypothesis_search,
+        api_client_for_proofing,
         lean_client,
         max_iteration_hypotheses_proof,
         max_correction_iteration_hypotheses_proof,
         verbose=verbose,
     )
+
     find_final_proof(
         proof_state,
         claude_client,

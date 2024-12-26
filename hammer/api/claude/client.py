@@ -4,19 +4,21 @@ import os
 import time
 import anthropic
 import logging
+from hammer.api.base_client import AIClient
 
 logger = logging.getLogger(__name__)
 
 
-class Client:
+class Client(AIClient):
     """Client wrapper for Anthropic's Claude API interactions."""
 
     def __init__(self):
         self.client = anthropic.Anthropic(
             api_key=os.getenv("CLAUDEAPIKEY"),
         )
+        self.name = "claude"
 
-    def send(self, message, verbose=False):
+    def send(self, message: str, verbose: bool = False) -> str:
         """Send a message to Claude and return its response."""
         if verbose:
             logger.debug(

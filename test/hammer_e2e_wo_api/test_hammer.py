@@ -128,9 +128,13 @@ exact h5
         proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
 
         # Create mock clients
-        client = Client(
+        client_for_hypothesis = Client(
             [
                 api_output_1,
+            ]
+        )
+        client = Client(
+            [
                 api_output_2,
                 api_output_3,
                 api_output_3,
@@ -141,7 +145,7 @@ exact h5
         )
 
         prove_theorem_via_hypotheses_search(
-            proof_state, client, self.lean_client, verbose=True
+            proof_state, client_for_hypothesis, [client], self.lean_client, verbose=True
         )
         assert len(proof_state.proven_hypotheses) == 5
         for x in proof_state.proven_hypotheses:
