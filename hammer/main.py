@@ -1,5 +1,5 @@
 import sys
-from hammer.api.logging import LogStreamHandler
+from hammer.api.logging import LogStreamHandler, ContextualLoggerAdapter
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.claude.client import Client as ClaudeClient
@@ -14,6 +14,7 @@ import os
 load_dotenv()
 deepseek_url = os.getenv("DEEPSEEK_URL")
 logger = logging.getLogger(__name__)
+contextual_logger = ContextualLoggerAdapter(logger, {"step": "Starting Proof"})
 
 
 def iterate_until_valid_proof(
@@ -110,7 +111,12 @@ def prove_theorem_via_hypotheses_search(
     max_iteration_hypotheses_proof=1,
     max_correction_iteration_hypotheses_proof=1,
     verbose=False,
+    log_handler: LogStreamHandler = None,
 ):
+
+    if not log_handler:
+        log_handler = LogStreamHandler("")
+    logger.debug("Searching for hypotheses:")
     proof_state.add_hypotheses(api_client_for_hypothesis_search, verbose)
     logger.debug("Added hypotheses")
     logger.debug(f"Theoretical hypotheses: {proof_state.theoretical_hypotheses}")
@@ -119,6 +125,8 @@ def prove_theorem_via_hypotheses_search(
     valid_proofs = []
     not_valid_formulations = []
     for i in range(len(proof_state.theoretical_hypotheses)):
+        log_handler.set_step(f"Proofing Hypotheses {i}")
+        logger.debug(f"Searching proof for hypothesis {i}")
         for api_client in api_client_for_proofing:
             try:
                 proof = iterate_until_valid_proof(
@@ -209,7 +217,8 @@ def prove_theorem(**kwargs):
         # Add handler to root logger
         root_logger.addHandler(log_handler)
 
-        logger.debug(f"Starting proof for task {task_id}")
+        contextual_logger.extra["step"] = "Starting Proof"
+        contextual_logger.debug(f"Starting proof for task {task_id}")
 
     name = kwargs["name"]
     hypotheses = kwargs["hypotheses"]
@@ -225,16 +234,17 @@ def prove_theorem(**kwargs):
     ]
     verbose = kwargs["verbose"]
 
-    # max_iteration_hypotheses_proof = 3
-    # max_correction_iteration_hypotheses_proof = 4
+    max_iteration_hypotheses_proof = 3
+    max_correction_iteration_hypotheses_proof = 4
     lean_client = LeanServer(kwargs["code_for_env_0"])
     proof_state = ProofSearchState(name, hypotheses, codeEnv0, goal)
     claude_client = ClaudeClient()
     deepSeek_client = DeepSeekClient(base_url=deepseek_url)
     api_client_for_proofing = [claude_client, deepSeek_client]
-    # api_client_for_proofing = [deepSeek_client]
+    api_client_for_proofing = [deepSeek_client]
     api_client_for_hypothesis_search = claude_client
 
+    log_handler.set_step("Adding Hypotheses")
     prove_theorem_via_hypotheses_search(
         proof_state,
         api_client_for_hypothesis_search,
@@ -243,18 +253,19 @@ def prove_theorem(**kwargs):
         max_iteration_hypotheses_proof,
         max_correction_iteration_hypotheses_proof,
         verbose=verbose,
+        log_handler=log_handler,
     )
 
+    log_handler.set_step("Building Final Proof")
     find_final_proof(
         proof_state,
-        claude_client,
+        deepSeek_client,
         lean_client,
         max_iteration_final_proof,
         max_correction_iteration_final_proof,
         verbose,
     )
 
-    # Remove log capture handling at the end since logs are streamed in real-time
     return proof_state
 
 

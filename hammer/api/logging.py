@@ -2,6 +2,18 @@ import logging
 import json
 from redis import Redis
 
+
+class ContextualLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        # Add the current step to the log message
+        self.set_step(self.extra["step"])
+        return f"[{self.extra['step']}] {msg}", kwargs
+
+    def set_step(self, step):
+        # Update the step in the extra dictionary
+        self.extra["step"] = step
+
+
 # Configure Redis connection
 redis_pubsub = Redis(host="localhost", port=6379)
 
@@ -18,7 +30,12 @@ class LogStreamHandler(logging.Handler):
         self.setLevel(logging.DEBUG)
         self.setFormatter(logging.Formatter("%(message)s"))
         self._internal_logger = logging.getLogger("internal")
-        self._internal_logger.debug(f"Initialized LogStreamHandler for task: {task_id}")
+        self._contextual_logger = ContextualLoggerAdapter(
+            self._internal_logger, {"step": "Initialization"}
+        )
+        self._contextual_logger.debug(
+            f"Initialized LogStreamHandler for task: {task_id}"
+        )
 
         # List of logger names to ignore
         self.ignored_loggers = [
@@ -28,6 +45,10 @@ class LogStreamHandler(logging.Handler):
             "httpcore",
             "httpx",
         ]
+
+    def set_step(self, step):
+        # Update the step in the contextual logger
+        self._contextual_logger.set_step(step)
 
     def emit(self, record):
         try:
@@ -44,6 +65,7 @@ class LogStreamHandler(logging.Handler):
                     "timestamp": record.created,
                     "name": record.name,
                     "level": record.levelname,
+                    "step": self._contextual_logger.extra["step"],
                     "message": msg,
                 }
             )
