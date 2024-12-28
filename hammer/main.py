@@ -254,7 +254,7 @@ def prove_theorem(**kwargs):
         raise NotImplementedError("OpenAI(o1) client not yet implemented")
     elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
         # Add OpenAI client initialization when implemented
-        ai_for_hypotheses_generation = OpenAIClient()
+        api_client_for_hypothesis_search = OpenAIClient()
     else:
         raise ValueError(f"Unknown AI client type: {ai_for_hypotheses_generation}")
 
