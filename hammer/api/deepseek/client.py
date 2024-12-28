@@ -7,6 +7,10 @@ import logging
 import json
 from hammer.api.base_client import AIClient
 from requests.exceptions import Timeout, RequestException
+from urllib3.exceptions import ProtocolError
+from requests.exceptions import ConnectionError
+from rq.timeouts import JobTimeoutException
+import signal
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +22,13 @@ class Client(AIClient):
         self.base_url = base_url or "http://194.26.196.173:21919"
         self.endpoint = f"{self.base_url}/generate"
         self._name = "DeepSeek"
-        self.timeout = 180  # Reduced from 300 to 180 to match RQ worker timeout
+        self.timeout = 120  # Reduced timeout to give more room for retry
+        self.max_retries = 5
+        self.initial_retry_delay = 1
+        self.max_retry_delay = 32
 
-    @property
-    def name(self) -> str:
-        return self._name
+    def _timeout_handler(self, signum, frame):
+        raise TimeoutError("Request timed out")
 
     def send(self, message, verbose=False):
         """Send a message to DeepSeek and return its response."""
@@ -31,46 +37,61 @@ class Client(AIClient):
                 f"Sending message to DeepSeek:\n \033[33m {message} \n \n \033[0m"
             )
 
-        max_retries = 3
-        retry_delay = 1  # seconds
+        retry_delay = self.initial_retry_delay
+        last_exception = None
 
-        for attempt in range(max_retries):
+        for attempt in range(self.max_retries):
             try:
-                response = requests.post(
-                    self.endpoint,
-                    headers={"Content-Type": "application/json"},
-                    json={"prompt": message},
-                    timeout=self.timeout,
-                )
-                response.raise_for_status()
+                # Set up signal handler for timeout
+                signal.signal(signal.SIGALRM, self._timeout_handler)
+                signal.alarm(self.timeout)
 
-                result = response.json()
-                output = result["generated_text"]
-
-                if verbose:
-                    logger.debug(
-                        f"Received response from DeepSeek:\n \033[33m {output}\033[0m"
+                try:
+                    response = requests.post(
+                        self.endpoint,
+                        headers={"Content-Type": "application/json"},
+                        json={"prompt": message},
+                        timeout=self.timeout,
                     )
-                return output
+                    signal.alarm(0)  # Disable the alarm
+                    response.raise_for_status()
 
-            except Timeout as e:
-                error_msg = (
-                    f"DeepSeek API request timed out after {self.timeout} seconds"
-                )
-                logger.error(error_msg)
-                if attempt == max_retries - 1:
-                    raise TimeoutError(error_msg) from e
-                if verbose:
-                    logger.debug(f"Timeout error, retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-                retry_delay *= 2
+                    result = response.json()
+                    output = result["generated_text"]
+
+                    if verbose:
+                        logger.debug(
+                            f"Received response from DeepSeek:\n \033[33m {output}\033[0m"
+                        )
+                    return output
+
+                except signal.SIGALRM:
+                    raise TimeoutError("Request timed out")
+
+                finally:
+                    signal.alarm(0)  # Ensure the alarm is disabled
+
+            except (Timeout, ConnectionError, ProtocolError, TimeoutError, JobTimeoutException) as e:
+                last_exception = e
+                error_msg = f"DeepSeek API connection error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                logger.warning(error_msg)
+                
+                if attempt == self.max_retries - 1:
+                    logger.error(f"All retries failed for DeepSeek API: {str(e)}")
+                    raise ConnectionError(f"Failed to connect to DeepSeek API after {self.max_retries} attempts") from e
 
             except (RequestException, json.JSONDecodeError) as e:
-                if attempt == max_retries - 1:  # Last attempt
-                    raise  # Re-raise the exception if all retries failed
+                last_exception = e
+                error_msg = f"DeepSeek API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                logger.warning(error_msg)
+                
+                if attempt == self.max_retries - 1:
+                    logger.error(f"All retries failed for DeepSeek API: {str(e)}")
+                    raise
+
+            if attempt < self.max_retries - 1:
+                sleep_time = min(retry_delay, self.max_retry_delay)
                 if verbose:
-                    logger.debug(
-                        f"Got server error: {str(e)}, retrying in {retry_delay} seconds..."
-                    )
-                time.sleep(retry_delay)
-                retry_delay *= 2  # Exponential backoff
+                    logger.debug(f"Retrying in {sleep_time} seconds...")
+                time.sleep(sleep_time)
+                retry_delay *= 2

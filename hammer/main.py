@@ -200,111 +200,116 @@ def find_final_proof(
 
 
 def prove_theorem(**kwargs):
-    task_id = kwargs.pop("task_id", None)
+    try:
+        task_id = kwargs.pop("task_id", None)
+        
+        # Set up logging
+        if task_id:
+            root_logger = logging.getLogger()
+            root_logger.setLevel(logging.DEBUG)
+            log_handler = LogStreamHandler(task_id)
+            log_handler.setLevel(logging.DEBUG)
+            formatter = logging.Formatter("%(message)s")
+            log_handler.setFormatter(formatter)
+            root_logger.addHandler(log_handler)
+            
+            contextual_logger.extra["step"] = "Starting Proof"
+            contextual_logger.debug(f"Starting proof for task {task_id}")
 
-    # Set up logging handler for this task if task_id is provided
-    if task_id:
-        # Set root logger to DEBUG level
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
+        # Get current RQ job if exists
+        current_job = get_current_job()
+        if current_job:
+            # Set a shorter job timeout to allow for retries
+            current_job.timeout = 150  # seconds
 
-        # Create and configure the LogStreamHandler
-        log_handler = LogStreamHandler(task_id)
-        log_handler.setLevel(logging.DEBUG)
+        name = kwargs["name"]
+        hypotheses = kwargs["hypotheses"]
+        codeEnv0 = kwargs["code_for_env_0"]
+        goal = kwargs["goal"]
+        max_iteration_hypotheses_proof = kwargs["max_iteration_hypotheses_proof"]
+        max_correction_iteration_hypotheses_proof = kwargs[
+            "max_correction_iteration_hypotheses_proof"
+        ]
+        max_iteration_final_proof = kwargs["max_iteration_final_proof"]
+        max_correction_iteration_final_proof = kwargs[
+            "max_correction_iteration_final_proof"
+        ]
+        verbose = kwargs["verbose"]
 
-        # Create formatter and add it to the handler
-        formatter = logging.Formatter("%(message)s")
-        log_handler.setFormatter(formatter)
+        ai_for_hypotheses_generation = kwargs["ai_for_hypotheses_generation"]
+        ai_for_hyptheses_proof = kwargs["ai_for_hyptheses_proof"]
+        ai_for_final_proof = kwargs["ai_for_final_proof"]
 
-        # Add handler to root logger
-        root_logger.addHandler(log_handler)
+        # Remove hardcoded values
+        lean_client = LeanServer(kwargs["code_for_env_0"])
+        proof_state = ProofSearchState(name, hypotheses, codeEnv0, goal)
 
-        contextual_logger.extra["step"] = "Starting Proof"
-        contextual_logger.debug(f"Starting proof for task {task_id}")
+        # Initialize the appropriate AI clients based on the parameters
+        if ai_for_hypotheses_generation == AIForHypothesesProof.CLAUDE:
+            api_client_for_hypothesis_search = ClaudeClient()
+        elif ai_for_hypotheses_generation == AIForHypothesesProof.DEEPSEEK_1_5:
+            api_client_for_hypothesis_search = DeepSeekClient(base_url=deepseek_url)
+        elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_O1:
+            # Add OpenAI client initialization when implemented
+            raise NotImplementedError("OpenAI(o1) client not yet implemented")
+        elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
+            # Add OpenAI client initialization when implemented
+            api_client_for_hypothesis_search = OpenAIClient()
+        else:
+            raise ValueError(f"Unknown AI client type: {ai_for_hypotheses_generation}")
 
-    name = kwargs["name"]
-    hypotheses = kwargs["hypotheses"]
-    codeEnv0 = kwargs["code_for_env_0"]
-    goal = kwargs["goal"]
-    max_iteration_hypotheses_proof = kwargs["max_iteration_hypotheses_proof"]
-    max_correction_iteration_hypotheses_proof = kwargs[
-        "max_correction_iteration_hypotheses_proof"
-    ]
-    max_iteration_final_proof = kwargs["max_iteration_final_proof"]
-    max_correction_iteration_final_proof = kwargs[
-        "max_correction_iteration_final_proof"
-    ]
-    verbose = kwargs["verbose"]
+        # Initialize the proof client based on parameter
+        if ai_for_hyptheses_proof == AIForHypothesesProof.CLAUDE:
+            api_client_for_proofing = [ClaudeClient()]
+        elif ai_for_hyptheses_proof == AIForHypothesesProof.DEEPSEEK_1_5:
+            api_client_for_proofing = [DeepSeekClient(base_url=deepseek_url)]
+        elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_O1:
+            raise NotImplementedError("OpenAI(o1) client not yet implemented")
+        elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_4O:
+            api_client_for_proofing = [OpenAIClient()]
+        else:
+            raise ValueError(f"Unknown AI client type: {ai_for_hyptheses_proof}")
 
-    ai_for_hypotheses_generation = kwargs["ai_for_hypotheses_generation"]
-    ai_for_hyptheses_proof = kwargs["ai_for_hyptheses_proof"]
-    ai_for_final_proof = kwargs["ai_for_final_proof"]
+        # Initialize the final proof client
+        if ai_for_final_proof == AIForHypothesesProof.CLAUDE:
+            final_proof_client = ClaudeClient()
+        elif ai_for_final_proof == AIForHypothesesProof.DEEPSEEK_1_5:
+            final_proof_client = DeepSeekClient(base_url=deepseek_url)
+        elif ai_for_final_proof == AIForHypothesesProof.OPENAI_O1:
+            raise NotImplementedError("OpenAI(o1) client not yet implemented")
+        elif ai_for_final_proof == AIForHypothesesProof.OPENAI_4O:
+            final_proof_client = OpenAIClient()
+        else:
+            raise ValueError(f"Unknown AI client type: {ai_for_final_proof}")
 
-    # Remove hardcoded values
-    lean_client = LeanServer(kwargs["code_for_env_0"])
-    proof_state = ProofSearchState(name, hypotheses, codeEnv0, goal)
+        log_handler.set_step("Adding Hypotheses")
+        prove_theorem_via_hypotheses_search(
+            proof_state,
+            api_client_for_hypothesis_search,
+            api_client_for_proofing,
+            lean_client,
+            max_iteration_hypotheses_proof,
+            max_correction_iteration_hypotheses_proof,
+            verbose=verbose,
+            log_handler=log_handler,
+        )
 
-    # Initialize the appropriate AI clients based on the parameters
-    if ai_for_hypotheses_generation == AIForHypothesesProof.CLAUDE:
-        api_client_for_hypothesis_search = ClaudeClient()
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.DEEPSEEK_1_5:
-        api_client_for_hypothesis_search = DeepSeekClient(base_url=deepseek_url)
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_O1:
-        # Add OpenAI client initialization when implemented
-        raise NotImplementedError("OpenAI(o1) client not yet implemented")
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
-        # Add OpenAI client initialization when implemented
-        api_client_for_hypothesis_search = OpenAIClient()
-    else:
-        raise ValueError(f"Unknown AI client type: {ai_for_hypotheses_generation}")
+        log_handler.set_step("Building Final Proof")
+        find_final_proof(
+            proof_state,
+            final_proof_client,  # Use the selected final proof client
+            lean_client,
+            max_iteration_final_proof,
+            max_correction_iteration_final_proof,
+            verbose,
+        )
 
-    # Initialize the proof client based on parameter
-    if ai_for_hyptheses_proof == AIForHypothesesProof.CLAUDE:
-        api_client_for_proofing = [ClaudeClient()]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.DEEPSEEK_1_5:
-        api_client_for_proofing = [DeepSeekClient(base_url=deepseek_url)]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_O1:
-        raise NotImplementedError("OpenAI(o1) client not yet implemented")
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_4O:
-        api_client_for_proofing = [OpenAIClient()]
-    else:
-        raise ValueError(f"Unknown AI client type: {ai_for_hyptheses_proof}")
+        return proof_state
 
-    # Initialize the final proof client
-    if ai_for_final_proof == AIForHypothesesProof.CLAUDE:
-        final_proof_client = ClaudeClient()
-    elif ai_for_final_proof == AIForHypothesesProof.DEEPSEEK_1_5:
-        final_proof_client = DeepSeekClient(base_url=deepseek_url)
-    elif ai_for_final_proof == AIForHypothesesProof.OPENAI_O1:
-        raise NotImplementedError("OpenAI(o1) client not yet implemented")
-    elif ai_for_final_proof == AIForHypothesesProof.OPENAI_4O:
-        final_proof_client = OpenAIClient()
-    else:
-        raise ValueError(f"Unknown AI client type: {ai_for_final_proof}")
-
-    log_handler.set_step("Adding Hypotheses")
-    prove_theorem_via_hypotheses_search(
-        proof_state,
-        api_client_for_hypothesis_search,
-        api_client_for_proofing,
-        lean_client,
-        max_iteration_hypotheses_proof,
-        max_correction_iteration_hypotheses_proof,
-        verbose=verbose,
-        log_handler=log_handler,
-    )
-
-    log_handler.set_step("Building Final Proof")
-    find_final_proof(
-        proof_state,
-        final_proof_client,  # Use the selected final proof client
-        lean_client,
-        max_iteration_final_proof,
-        max_correction_iteration_final_proof,
-        verbose,
-    )
-
-    return proof_state
+    except Exception as e:
+        logger.error(f"Critical error in prove_theorem: {str(e)}")
+        # Re-raise the exception to be handled by the job queue
+        raise
 
 
 def main(name, hypothesis, goal):
