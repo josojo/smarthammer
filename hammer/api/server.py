@@ -12,10 +12,12 @@ import time
 import logging
 from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
+from enum import Enum
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
 from hammer.api.logging import LogStreamHandler, redis_pubsub
+from hammer.api.types import AIForHypothesesProof
 
 app = FastAPI()
 # Configure Redis connection and queue
@@ -70,6 +72,9 @@ class TheoremRequest(BaseModel):
     name: str
     hypotheses: List[str]
     goal: str
+    ai_for_hypotheses_generation: AIForHypothesesProof
+    ai_for_hyptheses_proof: AIForHypothesesProof
+    ai_for_final_proof: AIForHypothesesProof
     max_iteration_hypotheses_proof: int = 1
     max_correction_iteration_hypotheses_proof: int = 1
     max_iteration_final_proof: int = 1
@@ -109,6 +114,9 @@ async def create_proof_task(theorem: TheoremRequest):
             "max_correction_iteration_hypotheses_proof": theorem.max_correction_iteration_hypotheses_proof,
             "max_iteration_final_proof": theorem.max_iteration_final_proof,
             "max_correction_iteration_final_proof": theorem.max_correction_iteration_final_proof,
+            "ai_for_hypotheses_generation": theorem.ai_for_hypotheses_generation,
+            "ai_for_hyptheses_proof": theorem.ai_for_hyptheses_proof,
+            "ai_for_final_proof": theorem.ai_for_final_proof,
             "verbose": theorem.verbose,
             "task_id": task_id,
         },

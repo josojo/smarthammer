@@ -4,12 +4,14 @@ from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.claude.client import Client as ClaudeClient
 from hammer.api.deepseek.client import Client as DeepSeekClient
+from hammer.api.openai.client import Client as OpenAIClient
 from hammer.api.base_client import AIClient
 from hammer.proof.retry import retry_until_success
 from rq import get_current_job
 import logging
 from dotenv import load_dotenv
 import os
+from hammer.api.types import AIForHypothesesProof
 
 load_dotenv()
 deepseek_url = os.getenv("DEEPSEEK_URL")
@@ -234,15 +236,51 @@ def prove_theorem(**kwargs):
     ]
     verbose = kwargs["verbose"]
 
-    max_iteration_hypotheses_proof = 3
-    max_correction_iteration_hypotheses_proof = 4
+    ai_for_hypotheses_generation = kwargs["ai_for_hypotheses_generation"]
+    ai_for_hyptheses_proof = kwargs["ai_for_hyptheses_proof"]
+    ai_for_final_proof = kwargs["ai_for_final_proof"]
+
+    # Remove hardcoded values
     lean_client = LeanServer(kwargs["code_for_env_0"])
     proof_state = ProofSearchState(name, hypotheses, codeEnv0, goal)
-    claude_client = ClaudeClient()
-    deepSeek_client = DeepSeekClient(base_url=deepseek_url)
-    api_client_for_proofing = [claude_client, deepSeek_client]
-    api_client_for_proofing = [deepSeek_client]
-    api_client_for_hypothesis_search = claude_client
+
+    # Initialize the appropriate AI clients based on the parameters
+    if ai_for_hypotheses_generation == AIForHypothesesProof.CLAUDE:
+        api_client_for_hypothesis_search = ClaudeClient()
+    elif ai_for_hypotheses_generation == AIForHypothesesProof.DEEPSEEK_1_5:
+        api_client_for_hypothesis_search = DeepSeekClient(base_url=deepseek_url)
+    elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_O1:
+        # Add OpenAI client initialization when implemented
+        raise NotImplementedError("OpenAI(o1) client not yet implemented")
+    elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
+        # Add OpenAI client initialization when implemented
+        ai_for_hypotheses_generation = OpenAIClient()
+    else:
+        raise ValueError(f"Unknown AI client type: {ai_for_hypotheses_generation}")
+
+    # Initialize the proof client based on parameter
+    if ai_for_hyptheses_proof == AIForHypothesesProof.CLAUDE:
+        api_client_for_proofing = [ClaudeClient()]
+    elif ai_for_hyptheses_proof == AIForHypothesesProof.DEEPSEEK_1_5:
+        api_client_for_proofing = [DeepSeekClient(base_url=deepseek_url)]
+    elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_O1:
+        raise NotImplementedError("OpenAI(o1) client not yet implemented")
+    elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_4O:
+        api_client_for_proofing = [OpenAIClient()]
+    else:
+        raise ValueError(f"Unknown AI client type: {ai_for_hyptheses_proof}")
+
+    # Initialize the final proof client
+    if ai_for_final_proof == AIForHypothesesProof.CLAUDE:
+        final_proof_client = ClaudeClient()
+    elif ai_for_final_proof == AIForHypothesesProof.DEEPSEEK_1_5:
+        final_proof_client = DeepSeekClient(base_url=deepseek_url)
+    elif ai_for_final_proof == AIForHypothesesProof.OPENAI_O1:
+        raise NotImplementedError("OpenAI(o1) client not yet implemented")
+    elif ai_for_final_proof == AIForHypothesesProof.OPENAI_4O:
+        final_proof_client = OpenAIClient()
+    else:
+        raise ValueError(f"Unknown AI client type: {ai_for_final_proof}")
 
     log_handler.set_step("Adding Hypotheses")
     prove_theorem_via_hypotheses_search(
@@ -259,7 +297,7 @@ def prove_theorem(**kwargs):
     log_handler.set_step("Building Final Proof")
     find_final_proof(
         proof_state,
-        deepSeek_client,
+        final_proof_client,  # Use the selected final proof client
         lean_client,
         max_iteration_final_proof,
         max_correction_iteration_final_proof,
