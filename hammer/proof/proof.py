@@ -16,6 +16,25 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
+def proof_based_on_solver(
+    client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
+) -> str:
+    total_prompt = prompt_part_1 + prompt_part_2
+    if client.name == "Claude":
+        total_prompt += prompt_part_3 + examples
+    logger.debug(f"Talking to {client.name} ")
+    response = client.send(total_prompt, verbose)
+    if client.name == "DeepSeek":
+        if "### Final Proof" in response:
+            response = response.split("### Final Proof")[-1]
+        first_triple_backtick = response.find("```")
+        if first_triple_backtick != -1:
+            if response[first_triple_backtick : first_triple_backtick + 7] != "```lean":
+                response = """```lean\n""" + response
+    proof = extract_proof_from_text(response)[0]
+    return proof
+
+
 class Hypothesis:
     """Represents a mathematical hypothesis with its name, statement, and proof."""
 
@@ -155,22 +174,9 @@ have np : n ≤ p :=
 ⟨p, np, pp⟩
 ```
 """
-        total_prompt = prompt_part_1 + prompt_part_2
-        if client.name == "Claude":
-            total_prompt += prompt_part_3 + examples
-        logger.debug(f"Talking to {client.name} ")
-        response = client.send(total_prompt, verbose)
-        if client.name == "DeepSeek":
-            if "### Final Proof" in response:
-                response = response.split("### Final Proof")[-1]
-            first_triple_backtick = response.find("```")
-            if first_triple_backtick != -1:
-                if (
-                    response[first_triple_backtick : first_triple_backtick + 7]
-                    != "```lean"
-                ):
-                    response = """```lean\n""" + response
-        proof = extract_proof_from_text(response)[0]
+        proof = proof_based_on_solver(
+            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
+        )
         return proof
 
     def get_theorem_code(self):
@@ -188,15 +194,16 @@ have np : n ≤ p :=
         code = unicode_escape(code)
         return code
 
-    def generate_final_proof(self, claude_client, starting_code, verbose=False):
+    def generate_final_proof(self, client, starting_code, verbose=False):
 
         code = self.get_theorem_code()
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
         prompt_part_2 = (
-            "```lean " + self.previous_code + "\n" + code + f" {starting_code}```\n"
+            "```lean " + self.previous_code + "\n" + code + f" {starting_code}"
         )
         prompt_part_3 = (
-            f"Complete the proof and put only the proof into ```lean ``` block.\n"
+            "```\n"
+            + f"Complete the proof and put only the proof into ```lean ``` block.\n"
         )
         examples = f"""Examples:
 Example 1:
@@ -228,11 +235,9 @@ have np : n ≤ p :=
 ⟨p, np, pp⟩
 ```
 """
-        total_prompt = prompt_part_1 + prompt_part_2 + prompt_part_3 + examples
-        response = claude_client.send(total_prompt, verbose)
-        proof = extract_lean_blocks(response)[0]
-        if verbose:
-            logger.debug(f"Proof candidate for final proof is:\n {proof}")
+        proof = proof_based_on_solver(
+            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
+        )
         return proof
 
     def set_proof(self, proof):
@@ -258,7 +263,7 @@ have np : n ≤ p :=
         )
         if goal.endswith("\n"):
             goal = goal.rstrip("\n")
-        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by\n"
+        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by"
         code = unicode_escape(code)
         return code
 

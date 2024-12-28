@@ -18,7 +18,7 @@ class Client(AIClient):
         self.base_url = base_url or "http://194.26.196.173:21919"
         self.endpoint = f"{self.base_url}/generate"
         self._name = "DeepSeek"
-        self.timeout = 300  # 5 minutes timeout by default
+        self.timeout = 180  # Reduced from 300 to 180 to match RQ worker timeout
 
     @property
     def name(self) -> str:
