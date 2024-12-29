@@ -12,6 +12,7 @@ import logging
 from dotenv import load_dotenv
 import os
 from hammer.api.types import AIForHypothesesProof
+import psutil
 
 load_dotenv()
 deepseek_url = os.getenv("DEEPSEEK_URL")
@@ -201,6 +202,11 @@ def find_final_proof(
 
 def prove_theorem(**kwargs):
     try:
+        # Add memory monitoring
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss
+        memory_usage_mb = initial_memory / (1024 * 1024)  # Convert bytes to MB
+
         task_id = kwargs.pop("task_id", None)
         
         # Set up logging
@@ -220,7 +226,9 @@ def prove_theorem(**kwargs):
         current_job = get_current_job()
         if current_job:
             # Set a shorter job timeout to allow for retries
-            current_job.timeout = 150  # seconds
+            current_job.timeout = 1500  # seconds
+            current_job.meta['memory_usage'] = memory_usage_mb
+            current_job.save_meta()
 
         name = kwargs["name"]
         hypotheses = kwargs["hypotheses"]
@@ -306,10 +314,16 @@ def prove_theorem(**kwargs):
 
         return proof_state
 
-    except Exception as e:
-        logger.error(f"Critical error in prove_theorem: {str(e)}")
-        # Re-raise the exception to be handled by the job queue
+    except MemoryError:
+        logger.critical("Out of memory error occurred")
         raise
+    except Exception as e:
+        logger.critical(f"Critical error in prove_theorem: {str(e)}", exc_info=True)
+        raise
+    finally:
+        # Clean up resources
+        if 'log_handler' in locals():
+            root_logger.removeHandler(log_handler)
 
 
 def main(name, hypothesis, goal):
