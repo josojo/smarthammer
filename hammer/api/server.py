@@ -22,7 +22,7 @@ from hammer.api.types import AIForHypothesesProof
 
 app = FastAPI()
 # Configure Redis connection and queue
-redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 redis_conn = Redis.from_url(redis_url)
 task_queue = Queue("theorem_prover", connection=redis_conn)
 
@@ -91,10 +91,12 @@ class TaskStatus(BaseModel):
     result: Optional[dict] = None
     logs: Optional[str] = None
 
+
 def my_handler(job, exc_type, exc_value, traceback):
     # Custom error handling logic
-    
+
     logger.error(f"Job {job.id} failed with error: {exc_value}", exc_info=True)
+
 
 @app.post("/prove/", response_model=TaskStatus)
 async def create_proof_task(theorem: TheoremRequest):
@@ -132,7 +134,7 @@ async def create_proof_task(theorem: TheoremRequest):
         failure_ttl=24 * 3600,  # Keep failed jobs for 24 hours
         meta={
             "enqueued_at": time.time(),
-            "memory_limit": 1024 * 1024 * 1024*2,  # 1GB limit
+            "memory_limit": 1024 * 1024 * 1024 * 2,  # 1GB limit
         },
         exception_handlers=[my_handler],
     )
