@@ -44,19 +44,23 @@ class Client(AIClient):
                     headers={
                         "Content-Type": "application/json",
                         "Accept": "application/json",
-                        "Connection": "close"  # Prevent keep-alive connections
+                        "Connection": "close",  # Prevent keep-alive connections
                     },
                     json={"prompt": message},
                     timeout=self.timeout,
-                    stream=True  # Enable streaming response
+                    stream=True,  # Enable streaming response
                 )
                 response.raise_for_status()
 
                 # Read response in chunks
                 content = ""
-                for chunk in response.iter_content(chunk_size=self.chunk_size, decode_unicode=True):
+                for chunk in response.iter_content(
+                    chunk_size=self.chunk_size, decode_unicode=True
+                ):
                     if chunk:
-                        content += chunk.decode('utf-8') if isinstance(chunk, bytes) else chunk
+                        content += (
+                            chunk.decode("utf-8") if isinstance(chunk, bytes) else chunk
+                        )
 
                 result = json.loads(content)
                 output = result["generated_text"]
@@ -71,29 +75,37 @@ class Client(AIClient):
                 last_exception = e
                 error_msg = f"DeepSeek API connection error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.warning(error_msg)
-                
+
                 if attempt == self.max_retries - 1:
                     logger.error(f"All retries failed for DeepSeek API: {str(e)}")
-                    raise ConnectionError(f"Failed to connect to DeepSeek API after {self.max_retries} attempts") from e
+                    raise ConnectionError(
+                        f"Failed to connect to DeepSeek API after {self.max_retries} attempts"
+                    ) from e
 
             except (RequestException, json.JSONDecodeError) as e:
                 last_exception = e
-                logger.error(f"DeepSeek API error (attempt {attempt + 1}/{self.max_retries}): {str(last_exception)}")
+                logger.error(
+                    f"DeepSeek API error (attempt {attempt + 1}/{self.max_retries}): {str(last_exception)}"
+                )
                 error_msg = f"DeepSeek API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.warning(error_msg)
-                
+
                 if attempt == self.max_retries - 1:
                     logger.error(f"All retries failed for DeepSeek API: {str(e)}")
                     raise
 
             except Exception as e:
                 last_exception = e
-                logger.error(f"Unexpected error (attempt {attempt + 1}/{self.max_retries}): {str(e)}")
+                logger.error(
+                    f"Unexpected error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                )
                 error_msg = f"Unexpected error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.warning(error_msg)
-                
+
                 if attempt == self.max_retries - 1:
-                    logger.error(f"All retries failed due to an unexpected error: {str(e)}")
+                    logger.error(
+                        f"All retries failed due to an unexpected error: {str(e)}"
+                    )
                     raise
 
             if attempt < self.max_retries - 1:

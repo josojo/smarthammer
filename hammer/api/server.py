@@ -123,11 +123,11 @@ async def create_proof_task(theorem: TheoremRequest):
         job_id=task_id,
         result_ttl=166400,  # Store finished jobs for 2*24 hours
         timeout=7200,  # Increase timeout to 2 hours
-        failure_ttl=24*3600,  # Keep failed jobs for 24 hours
+        failure_ttl=24 * 3600,  # Keep failed jobs for 24 hours
         meta={
-            'enqueued_at': time.time(),
-            'memory_limit': 1024 * 1024 * 1024,  # 1GB limit
-        }
+            "enqueued_at": time.time(),
+            "memory_limit": 1024 * 1024 * 1024,  # 1GB limit
+        },
     )
 
     return TaskStatus(task_id=task_id, status="pending", logs="")

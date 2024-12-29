@@ -208,7 +208,7 @@ def prove_theorem(**kwargs):
         memory_usage_mb = initial_memory / (1024 * 1024)  # Convert bytes to MB
 
         task_id = kwargs.pop("task_id", None)
-        
+
         # Set up logging
         if task_id:
             root_logger = logging.getLogger()
@@ -218,7 +218,7 @@ def prove_theorem(**kwargs):
             formatter = logging.Formatter("%(message)s")
             log_handler.setFormatter(formatter)
             root_logger.addHandler(log_handler)
-            
+
             contextual_logger.extra["step"] = "Starting Proof"
             contextual_logger.debug(f"Starting proof for task {task_id}")
 
@@ -227,7 +227,7 @@ def prove_theorem(**kwargs):
         if current_job:
             # Set a shorter job timeout to allow for retries
             current_job.timeout = 1500  # seconds
-            current_job.meta['memory_usage'] = memory_usage_mb
+            current_job.meta["memory_usage"] = memory_usage_mb
             current_job.save_meta()
 
         name = kwargs["name"]
@@ -322,7 +322,7 @@ def prove_theorem(**kwargs):
         raise
     finally:
         # Clean up resources
-        if 'log_handler' in locals():
+        if "log_handler" in locals():
             root_logger.removeHandler(log_handler)
 
 
