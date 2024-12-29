@@ -160,3 +160,6 @@ cython_debug/
 #.idea/
 
 output.txt
+
+# Heroku deployment
+.DS_Store
