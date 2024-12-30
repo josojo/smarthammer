@@ -9,12 +9,13 @@ from hammer.api.base_client import AIClient
 class Client(AIClient):
     """Client wrapper for OpenAI API interactions."""
 
-    def __init__(self):
+    def __init__(self, model: str = "o1-mini"):
         self.client = OpenAI(
             organization=os.getenv("OPENAI_ORG_ID"),
             project=os.getenv("OPENAI_PROJECT_ID"),
         )
         self._name = "OpenAI"
+        self.model = model
 
     def send(self, message: str, verbose: bool = False) -> str:
         """Send a message to OpenAI and return its response.
@@ -35,7 +36,7 @@ class Client(AIClient):
                     "content": message,
                 }
             ],
-            model="gpt-4o-mini",
+            model=self.model,
         )
         content = result.choices[0].message.content
         if verbose:

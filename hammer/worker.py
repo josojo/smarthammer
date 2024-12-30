@@ -55,7 +55,6 @@ if __name__ == "__main__":
             with_scheduler=True,
             burst=False,
             logging_level=logging.DEBUG,
-            max_jobs=1,
         )
     except KeyboardInterrupt:
         logger.info("Worker stopped by user")

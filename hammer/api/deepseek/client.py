@@ -43,12 +43,9 @@ class Client(AIClient):
                     self.endpoint,
                     headers={
                         "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "Connection": "close",  # Prevent keep-alive connections
                     },
                     json={"prompt": message},
                     timeout=self.timeout,
-                    stream=True,  # Enable streaming response
                 )
                 response.raise_for_status()
 
