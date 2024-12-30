@@ -102,7 +102,7 @@ def my_handler(job, exc_type, exc_value, traceback):
 async def create_proof_task(theorem: TheoremRequest):
     # Create a task_id that starts with the theorem name and includes timestamp
     timestamp = int(time.time())
-    task_id = f"{theorem.name}-{timestamp}-{uuid.uuid4()}"
+    task_id = f"{theorem.name}-{timestamp}-{str(uuid.uuid4())[:10]}"
 
     # Initialize task status in Redis
     initial_status = {"status": "pending", "result": None, "logs": ""}
