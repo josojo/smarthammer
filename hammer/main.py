@@ -6,6 +6,7 @@ from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.claude.client import Client as ClaudeClient
 from hammer.api.deepseek.client import Client as DeepSeekClient
 from hammer.api.openai.client import Client as OpenAIClient
+from hammer.api.mock.mock_client import Client as MockClient
 from hammer.api.base_client import AIClient
 from hammer.proof.retry import retry_until_success
 from rq import get_current_job
@@ -14,6 +15,48 @@ from dotenv import load_dotenv
 import os
 from hammer.api.types import AIForHypothesesProof
 import psutil
+
+api_output_1 = """
+Natural language proof:
+We want to show that \gcd(21n + 4, 14n + 3) = 1 for any natural number n with 0 < n. We use the fact that \gcd(a, b) = \gcd(a - b, b). Substituting a = 21n + 4 and b = 14n + 3, we get:
+
+\[
+\gcd(21n + 4,\, 14n + 3)
+= \gcd\bigl((21n + 4) - (14n + 3),\, 14n + 3\bigr)
+= \gcd(7n + 1,\, 14n + 3).
+\]
+
+Next, we apply the same gcd property again but now we subtract twice (7n + 1):
+
+\[
+\gcd(7n + 1,\, 14n + 3)
+= \gcd\bigl(7n + 1,\,(14n + 3) - 2(7n + 1)\bigr)
+= \gcd(7n + 1,\, 1).
+\]
+
+Since the gcd of any number and 1 is always 1, we conclude
+
+
+\gcd(7n + 1,\, 1) = 1.
+
+
+Hence,
+
+
+\gcd(21n + 4,\, 14n + 3) = 1.
+
+           ```lean
+lemma lem1 : ∀ a b : ℕ, Nat.gcd a b = Nat.gcd (a - b) b ```,           
+
+```lean
+lemma lem2 : ∀ n : ℕ, Nat.gcd (21 * n + 4) (14 * n + 3) = Nat.gcd (7 * n + 1) (14 * n + 3)```,           
+```lean
+lemma lem3 : ∀ n : ℕ, Nat.gcd (7 * n + 1) (14 * n + 3) = Nat.gcd (7 * n + 1) 1 ```, 
+```lean
+lemma lem4 : ∀ x : ℕ, Nat.gcd x 1 = 1 ```, 
+```lean
+lemma lem5 : 14 * n + 3 - 2 * (7 * n + 1) = 1 
+ """
 
 load_dotenv()
 deepseek_url = os.getenv("DEEPSEEK_URL")
@@ -259,10 +302,13 @@ def prove_theorem(**kwargs):
         elif ai_for_hypotheses_generation == AIForHypothesesProof.DEEPSEEK_1_5:
             api_client_for_hypothesis_search = DeepSeekClient(base_url=deepseek_url)
         elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_O1:
-            # Add OpenAI client initialization when implemented
-            api_client_for_hypothesis_search = OpenAIClient("o1")
+            api_client_for_hypothesis_search = MockClient(
+            [
+                api_output_1,
+            ]
+        )
+            # api_client_for_hypothesis_search = OpenAIClient("o1")
         elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
-            # Add OpenAI client initialization when implemented
             api_client_for_hypothesis_search = OpenAIClient("gpt-4o")
         else:
             raise ValueError(f"Unknown AI client type: {ai_for_hypotheses_generation}")
