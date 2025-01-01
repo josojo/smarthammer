@@ -20,7 +20,7 @@
 
    # Install Lean version as specified in lean-toolchain
    pwd
-   https://github.com/leanprover-community/repl.git
+   git clone https://github.com/leanprover-community/repl.git
    cd repl
    LEAN_VERSION=$(cat lean-toolchain)
    elan default $LEAN_VERSION
