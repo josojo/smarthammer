@@ -21,7 +21,7 @@ export PATH="$HOME/.elan/bin:$PATH"
 
 # Clone REPL repository
 echo "Cloning REPL repository..."
-/usr/bin/git clone https://github.com/leanprover-community/repl.git
+/app/.apt/usr/bin/git clone http://github.com/leanprover-community/repl.git
 cd repl
 
 # Install Lean version as specified in lean-toolchain
