@@ -303,10 +303,10 @@ def prove_theorem(**kwargs):
             api_client_for_hypothesis_search = DeepSeekClient(base_url=deepseek_url)
         elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_O1:
             api_client_for_hypothesis_search = MockClient(
-            [
-                api_output_1,
-            ]
-        )
+                [
+                    api_output_1,
+                ]
+            )
             # api_client_for_hypothesis_search = OpenAIClient("o1")
         elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
             api_client_for_hypothesis_search = OpenAIClient("gpt-4o")
