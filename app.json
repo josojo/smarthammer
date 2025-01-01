@@ -1,17 +1,20 @@
 {
-  "name": "Theorem Prover",
-  "description": "A theorem prover application using FastAPI and Redis",
-  "keywords": ["python", "fastapi", "redis"],
-  "addons": ["heroku-redis:hobby-dev"],
-  "env": {
-    "REPLPATH": {
-      "description": "Path to the Lean REPL",
-      "value": "/app/lean/repl"
-    }
-  },
-  "buildpacks": [
-    {
-      "url": "heroku/python"
-    }
-  ]
-} 
+    "name": "Theorem Prover",
+    "description": "A theorem prover application using FastAPI and Redis",
+    "keywords": ["python", "fastapi", "redis"],
+    "addons": ["heroku-redis:hobby-dev"],
+    "env": {
+      "REPLPATH": {
+        "description": "Path to the Lean REPL",
+        "value": "/app/repl/test/Mathlib"
+      }
+    },
+    "buildpacks": [
+      {
+        "url": "heroku/python"
+      },
+      {
+        "url": "https://github.com/heroku/heroku-buildpack-bash.git"
+      }
+    ]
+  }
