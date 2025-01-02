@@ -21,6 +21,7 @@ export PATH="$HOME/.elan/bin:$PATH"
 
 # Clone REPL repository
 echo "Cloning REPL repository..."
+export GIT_EXEC_PATH=/app/.apt/usr/lib/git-core
 /app/.apt/usr/bin/git clone https://github.com/leanprover-community/repl.git
 cd repl
 
