@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from redis import Redis
+from redis import Redis, ConnectionPool
 from rq import Queue
 import uuid
 import logging
@@ -24,11 +24,17 @@ from hammer.api.types import AIForHypothesesProof
 app = FastAPI()
 # Configure Redis connection and queue
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-redis_conn = Redis.from_url(redis_url, ssl_cert_reqs=None)
+
+
+# Create a connection pool with SSL context
+connection_pool = ConnectionPool.from_url(redis_url)
+
+# Configure Redis connection with the connection pool
+redis_conn = Redis(connection_pool=connection_pool)
 task_queue = Queue("theorem_prover", connection=redis_conn)
 
 # Add Redis pubsub connection
-redis_pubsub = Redis.from_url(redis_url)
+redis_pubsub = Redis(connection_pool=connection_pool)
 
 # Add CORS middleware configuration
 app.add_middleware(
