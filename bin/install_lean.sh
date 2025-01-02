@@ -19,7 +19,7 @@ curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf 
 # Add Elan to PATH
 export PATH="$HOME/.elan/bin:$PATH"
 
-# Clone REPL repository:
+# Clone REPL repository
 echo "Cloning REPL repository..."
 /app/.apt/usr/bin/git clone https://github.com/leanprover-community/repl.git
 cd repl
