@@ -82,14 +82,6 @@ curl -X POST "http://localhost:8000/prove/" -H "Content-Type: application/json" 
     "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
 }'
 ```
-https://smarthammerr-f43eff2846f3.herokuapp.com/
-
-
-curl -X POST "http://localhost:8000/prove/" -H "Content-Type: application/json" -d '{
-    "name": "thm1",
-    "hypotheses": ["(n : ℕ)", "(oh0 : 0 < n)"],
-    "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
-}'
 To get the status
 
 ```cmd

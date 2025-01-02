@@ -24,6 +24,9 @@ def handle_timeout(signum, frame):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
+    # Suppress debug logs from rq.scheduler
+    logging.getLogger("rq.scheduler").setLevel(logging.INFO)
+
     # Register signal handlers
     signal.signal(signal.SIGALRM, handle_timeout)
 
