@@ -36,4 +36,3 @@ typing_extensions==4.12.2
 uvicorn==0.32.1
 requests==2.26.0
 psutil==5.8.0
-ssl==2.1.0

@@ -4,13 +4,12 @@ import os
 import logging
 from rq.timeouts import JobTimeoutException
 import signal
-import ssl
 
 logger = logging.getLogger(__name__)
 
 # Configure Redis connection with timeout settings
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-redis_conn = Redis.from_url(redis_url, ssl_cert_reqs=ssl.CERT_NONE)
+redis_conn = Redis.from_url(redis_url, ssl_cert_reqs=None)
 
 # Worker configuration
 default_worker_ttl = 7200  # 2 hours

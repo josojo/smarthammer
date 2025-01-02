@@ -1,4 +1,3 @@
-import ssl
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -25,7 +24,7 @@ from hammer.api.types import AIForHypothesesProof
 app = FastAPI()
 # Configure Redis connection and queue
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-redis_conn = Redis.from_url(redis_url, ssl_cert_reqs=ssl.CERT_NONE)
+redis_conn = Redis.from_url(redis_url, ssl_cert_reqs=None)
 task_queue = Queue("theorem_prover", connection=redis_conn)
 
 # Add Redis pubsub connection
