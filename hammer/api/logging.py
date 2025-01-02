@@ -4,6 +4,7 @@ import os
 from urllib.parse import urlparse
 import redis
 
+
 class ContextualLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         # Add the current step to the log message
@@ -19,7 +20,13 @@ class ContextualLoggerAdapter(logging.LoggerAdapter):
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 url = urlparse(redis_url)
 # Configure Redis connection with the connection pool
-redis_pubsub = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
+redis_pubsub = redis.Redis(
+    host=url.hostname,
+    port=url.port,
+    password=url.password,
+    ssl=(url.scheme == "rediss"),
+    ssl_cert_reqs=None,
+)
 
 # Create internal logger for handler operations
 internal_logger = logging.getLogger("internal")
@@ -29,7 +36,13 @@ class LogStreamHandler(logging.Handler):
     def __init__(self, task_id):
         super().__init__()
         self.task_id = task_id
-        self.redis_conn = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
+        self.redis_conn = redis.Redis(
+            host=url.hostname,
+            port=url.port,
+            password=url.password,
+            ssl=(url.scheme == "rediss"),
+            ssl_cert_reqs=None,
+        )
         # Add back the logging configurations
         self.setLevel(logging.DEBUG)
         self.setFormatter(logging.Formatter("%(message)s"))

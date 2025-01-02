@@ -12,7 +12,13 @@ logger = logging.getLogger(__name__)
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 url = urlparse(redis_url)
 # Configure Redis connection with the connection pool
-redis_conn = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
+redis_conn = redis.Redis(
+    host=url.hostname,
+    port=url.port,
+    password=url.password,
+    ssl=(url.scheme == "rediss"),
+    ssl_cert_reqs=None,
+)
 
 # Worker configuration
 default_worker_ttl = 7200  # 2 hours

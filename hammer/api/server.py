@@ -30,13 +30,24 @@ redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 url = urlparse(redis_url)
 
 
-
 # Configure Redis connection with the connection pool
-redis_conn = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
+redis_conn = redis.Redis(
+    host=url.hostname,
+    port=url.port,
+    password=url.password,
+    ssl=(url.scheme == "rediss"),
+    ssl_cert_reqs=None,
+)
 task_queue = Queue("theorem_prover", connection=redis_conn)
 
 # Add Redis pubsub connection
-redis_pubsub = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
+redis_pubsub = redis.Redis(
+    host=url.hostname,
+    port=url.port,
+    password=url.password,
+    ssl=(url.scheme == "rediss"),
+    ssl_cert_reqs=None,
+)
 
 # Add CORS middleware configuration
 app.add_middleware(
@@ -292,4 +303,7 @@ async def clean_failed_tasks():
         deleted_jobs.append(job_id)
         logger.info(f"Deleted failed job: {job_id}")
 
-    return {"deleted_jobs": deleted_jobs, "message": "All failed jobs have been deleted."}
+    return {
+        "deleted_jobs": deleted_jobs,
+        "message": "All failed jobs have been deleted.",
+    }
