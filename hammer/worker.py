@@ -8,13 +8,8 @@ import signal
 logger = logging.getLogger(__name__)
 
 # Configure Redis connection with timeout settings
-redis_conn = Redis(
-    host=os.getenv("REDIS_HOST", "localhost"),
-    port=int(os.getenv("REDIS_PORT", 6379)),
-    password=os.getenv("REDIS_PASSWORD", None),
-    socket_timeout=None,  # Disable socket timeout
-    socket_connect_timeout=None,  # Disable connect timeout
-)
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis_conn = Redis.from_url(redis_url)
 
 # Worker configuration
 default_worker_ttl = 7200  # 2 hours
