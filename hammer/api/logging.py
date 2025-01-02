@@ -1,8 +1,8 @@
 import logging
 import json
 import os
-from redis import Redis, ConnectionPool
-
+from urllib.parse import urlparse
+import redis
 
 class ContextualLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
@@ -17,12 +17,9 @@ class ContextualLoggerAdapter(logging.LoggerAdapter):
 
 # Configure Redis connection
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-
-# Create a connection pool with SSL context
-connection_pool = ConnectionPool.from_url(redis_url)
-
+url = urlparse(redis_url)
 # Configure Redis connection with the connection pool
-redis_pubsub = Redis(connection_pool=connection_pool)
+redis_pubsub = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
 
 # Create internal logger for handler operations
 internal_logger = logging.getLogger("internal")
@@ -32,10 +29,7 @@ class LogStreamHandler(logging.Handler):
     def __init__(self, task_id):
         super().__init__()
         self.task_id = task_id
-
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-        connection_pool = ConnectionPool.from_url(redis_url, ssl_context=ssl_context)
-        self.redis_conn = Redis(connection_pool=connection_pool)
+        self.redis_conn = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
         # Add back the logging configurations
         self.setLevel(logging.DEBUG)
         self.setFormatter(logging.Formatter("%(message)s"))

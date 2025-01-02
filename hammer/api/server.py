@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from enum import Enum
 import os
 from rq.registry import FailedJobRegistry
+from urllib.parse import urlparse
+import redis
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
@@ -25,16 +27,16 @@ app = FastAPI()
 # Configure Redis connection and queue
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 
+url = urlparse(redis_url)
 
-# Create a connection pool with SSL context
-connection_pool = ConnectionPool.from_url(redis_url)
+
 
 # Configure Redis connection with the connection pool
-redis_conn = Redis(connection_pool=connection_pool)
+redis_conn = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
 task_queue = Queue("theorem_prover", connection=redis_conn)
 
 # Add Redis pubsub connection
-redis_pubsub = Redis(connection_pool=connection_pool)
+redis_pubsub = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=(url.scheme == "rediss"), ssl_cert_reqs=None)
 
 # Add CORS middleware configuration
 app.add_middleware(
