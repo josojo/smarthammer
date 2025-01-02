@@ -24,7 +24,7 @@ echo "Cloning REPL repository..."
 /app/.apt/usr/bin/git clone https://github.com/leanprover-community/repl.git
 cd repl
 
-# Install Lean version as specified in lean-toolchain
+# Install Lean version as specified in lean-toolchain:
 LEAN_VERSION=$(cat lean-toolchain)
 elan default $LEAN_VERSION
 
