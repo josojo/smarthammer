@@ -1,5 +1,7 @@
 import logging
 import json
+import os
+import ssl
 from redis import Redis
 
 
@@ -25,7 +27,9 @@ class LogStreamHandler(logging.Handler):
     def __init__(self, task_id):
         super().__init__()
         self.task_id = task_id
-        self.redis_conn = Redis(host="localhost", port=6379)
+
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.redis_conn = Redis.from_url(redis_url, ssl_cert_reqs=ssl.CERT_NONE)
         # Add back the logging configurations
         self.setLevel(logging.DEBUG)
         self.setFormatter(logging.Formatter("%(message)s"))
