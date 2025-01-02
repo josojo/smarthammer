@@ -7,6 +7,10 @@
       "REPLPATH": {
         "description": "Path to the Lean REPL",
         "value": "/app/repl/test/Mathlib"
+      },
+      "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": {
+        "description": "Disable fork safety for the Lean REPL",
+        "value": "YES"
       }
     },
     "buildpacks": [
