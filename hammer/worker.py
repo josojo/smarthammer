@@ -46,7 +46,7 @@ if __name__ == "__main__":
     worker = Worker(
         queues=[queue],
         connection=redis_conn,
-        default_worker_ttl=default_worker_ttl,
+        worker_ttl=default_worker_ttl,  # Set appropriate TTL
     )
 
     # Start the worker with exception handling

@@ -14,6 +14,7 @@ from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
 from enum import Enum
 import os
+from rq.registry import FailedJobRegistry
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
@@ -267,3 +268,20 @@ async def get_pending_tasks():
         "failed_tasks": failed_jobs[::-1],
         "finished_tasks": finished_jobs[::-1],
     }
+
+
+@app.delete("/clean-failed-tasks/")
+async def clean_failed_tasks():
+    """
+    Deletes all failed tasks from the worker queue.
+    """
+    failed_job_registry = FailedJobRegistry(queue=task_queue)
+    deleted_jobs = []
+
+    for job_id in failed_job_registry.get_job_ids():
+        job = Job.fetch(job_id, connection=redis_conn)
+        job.delete()
+        deleted_jobs.append(job_id)
+        logger.info(f"Deleted failed job: {job_id}")
+
+    return {"deleted_jobs": deleted_jobs, "message": "All failed jobs have been deleted."}
