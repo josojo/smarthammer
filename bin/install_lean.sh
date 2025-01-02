@@ -19,7 +19,7 @@
    # Add Elan to PATH
    export PATH="$HOME/.elan/bin:$PATH"
 
-   # Clone REPL repository using SSH
+   # Clone REPL repository using SSH:
    echo "Cloning REPL repository..."
    /app/.apt/usr/bin/git clone git@github.com:leanprover-community/repl.git
    cd repl
