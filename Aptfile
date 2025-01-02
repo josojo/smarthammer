@@ -6,3 +6,4 @@ ninja-build
 libssl-dev
 pkg-config
 git
+ssh
