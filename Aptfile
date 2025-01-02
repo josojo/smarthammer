@@ -7,3 +7,8 @@ libssl-dev
 pkg-config
 git
 ssh
+libcurl4-openssl-dev
+libexpat1-dev
+gettext
+libz-dev
+libssl-dev
