@@ -349,6 +349,10 @@ def prove_theorem(**kwargs):
         ]
         verbose = kwargs["verbose"]
 
+        # Add this line to ensure REPLPATH is set from environment if not in .env
+        if not os.getenv("REPLPATH"):
+            os.environ["REPLPATH"] = "/app/repl/test/Mathlib"
+
         ai_for_hypotheses_generation = kwargs["ai_for_hypotheses_generation"]
         ai_for_hyptheses_proof = kwargs["ai_for_hyptheses_proof"]
         ai_for_final_proof = kwargs["ai_for_final_proof"]
