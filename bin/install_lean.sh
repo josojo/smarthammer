@@ -3,8 +3,8 @@ set -e
 
 echo "Starting REPL setup..."
 
-# Create a writable directory in /tmp
-WORK_DIR="/tmp/repl_setup"
+# Create directory in the app root instead of /tmp
+WORK_DIR="$HOME/repl_setup"
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR"
 
@@ -36,9 +36,11 @@ cd test/Mathlib
 echo "Downloading Mathlib..."
 lake exe cache get > /dev/null
 
-echo "Copying built files to app directory..."
-# Copy built files to the app directory
-mkdir -p /app/repl
-cp -r "$WORK_DIR/repl"/* /app/repl/
+echo "Copying built files to home directory..."
+mkdir -p "$HOME/repl"
+cp -r "$WORK_DIR/repl"/* "$HOME/repl/"
+
+# Add a marker file to indicate successful installation
+touch "$HOME/repl/.installation_complete"
 
 echo "REPL setup completed successfully"
