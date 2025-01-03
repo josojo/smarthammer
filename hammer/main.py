@@ -248,24 +248,56 @@ def find_final_proof(
 def validate_inputs(kwargs):
     """Validate input parameters to ensure they are within acceptable limits."""
     # Validate iteration limits
-    if kwargs.get("max_iteration_hypotheses_proof", 0) >= SOLVER_LIMITS.max_iteration_hypotheses_proof:
-        raise ValueError(f"max_iteration_hypotheses_proof should be less than {SOLVER_LIMITS.max_iteration_hypotheses_proof}")
-    if kwargs.get("max_correction_iteration_hypotheses_proof", 0) >= SOLVER_LIMITS.max_correction_iteration_hypotheses_proof:
-        raise ValueError(f"max_correction_iteration_hypotheses_proof should be less than {SOLVER_LIMITS.max_correction_iteration_hypotheses_proof}")
-    if kwargs.get("max_iteration_final_proof", 0) >= SOLVER_LIMITS.max_iteration_final_proof:
-        raise ValueError(f"max_iteration_final_proof should be less than {SOLVER_LIMITS.max_iteration_final_proof}")
-    if kwargs.get("max_correction_iteration_final_proof", 0) >= SOLVER_LIMITS.max_correction_iteration_final_proof:
-        raise ValueError(f"max_correction_iteration_final_proof should be less than {SOLVER_LIMITS.max_correction_iteration_final_proof}")
+    if (
+        kwargs.get("max_iteration_hypotheses_proof", 0)
+        >= SOLVER_LIMITS.max_iteration_hypotheses_proof
+    ):
+        raise ValueError(
+            f"max_iteration_hypotheses_proof should be less than {SOLVER_LIMITS.max_iteration_hypotheses_proof}"
+        )
+    if (
+        kwargs.get("max_correction_iteration_hypotheses_proof", 0)
+        >= SOLVER_LIMITS.max_correction_iteration_hypotheses_proof
+    ):
+        raise ValueError(
+            f"max_correction_iteration_hypotheses_proof should be less than {SOLVER_LIMITS.max_correction_iteration_hypotheses_proof}"
+        )
+    if (
+        kwargs.get("max_iteration_final_proof", 0)
+        >= SOLVER_LIMITS.max_iteration_final_proof
+    ):
+        raise ValueError(
+            f"max_iteration_final_proof should be less than {SOLVER_LIMITS.max_iteration_final_proof}"
+        )
+    if (
+        kwargs.get("max_correction_iteration_final_proof", 0)
+        >= SOLVER_LIMITS.max_correction_iteration_final_proof
+    ):
+        raise ValueError(
+            f"max_correction_iteration_final_proof should be less than {SOLVER_LIMITS.max_correction_iteration_final_proof}"
+        )
 
     # Validate AI model selections
-    if kwargs.get("ai_for_hypotheses_generation") not in SOLVER_LIMITS.allowed_hypothesis_generation_models:
-        raise ValueError(f"Invalid AI model for hypothesis generation. Allowed models: {SOLVER_LIMITS.allowed_hypothesis_generation_models}")
-    
-    if kwargs.get("ai_for_hyptheses_proof") not in SOLVER_LIMITS.allowed_hypothesis_proof_models:
-        raise ValueError(f"Invalid AI model for hypothesis proof. Allowed models: {SOLVER_LIMITS.allowed_hypothesis_proof_models}")
-    
+    if (
+        kwargs.get("ai_for_hypotheses_generation")
+        not in SOLVER_LIMITS.allowed_hypothesis_generation_models
+    ):
+        raise ValueError(
+            f"Invalid AI model for hypothesis generation. Allowed models: {SOLVER_LIMITS.allowed_hypothesis_generation_models}"
+        )
+
+    if (
+        kwargs.get("ai_for_hyptheses_proof")
+        not in SOLVER_LIMITS.allowed_hypothesis_proof_models
+    ):
+        raise ValueError(
+            f"Invalid AI model for hypothesis proof. Allowed models: {SOLVER_LIMITS.allowed_hypothesis_proof_models}"
+        )
+
     if kwargs.get("ai_for_final_proof") not in SOLVER_LIMITS.allowed_final_proof_models:
-        raise ValueError(f"Invalid AI model for final proof. Allowed models: {SOLVER_LIMITS.allowed_final_proof_models}")
+        raise ValueError(
+            f"Invalid AI model for final proof. Allowed models: {SOLVER_LIMITS.allowed_final_proof_models}"
+        )
 
     # Special warning for mocked models
     if kwargs.get("ai_for_hypotheses_generation") in [AIForHypothesesProof.OPENAI_O1]:
@@ -365,7 +397,7 @@ def prove_theorem(**kwargs):
             final_proof_client = OpenAIClient("gpt-4o")
         else:
             raise ValueError(f"Unknown AI client type: {ai_for_final_proof}")
-        
+
         log_handler.set_step("Adding Hypotheses")
         prove_theorem_via_hypotheses_search(
             proof_state,

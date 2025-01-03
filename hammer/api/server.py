@@ -324,16 +324,24 @@ async def get_solver_config():
                 "max_correction_iteration_final_proof": SOLVER_LIMITS.max_correction_iteration_final_proof,
             },
             "allowed_models": {
-                "hypothesis_generation": [model.value for model in SOLVER_LIMITS.allowed_hypothesis_generation_models],
-                "hypothesis_proof": [model.value for model in SOLVER_LIMITS.allowed_hypothesis_proof_models],
-                "final_proof": [model.value for model in SOLVER_LIMITS.allowed_final_proof_models],
-            }
+                "hypothesis_generation": [
+                    model.value
+                    for model in SOLVER_LIMITS.allowed_hypothesis_generation_models
+                ],
+                "hypothesis_proof": [
+                    model.value
+                    for model in SOLVER_LIMITS.allowed_hypothesis_proof_models
+                ],
+                "final_proof": [
+                    model.value for model in SOLVER_LIMITS.allowed_final_proof_models
+                ],
+            },
         },
         "description": {
             "max_iteration_hypotheses_proof": "Maximum number of iterations for hypothesis proof generation",
             "max_correction_iteration_hypotheses_proof": "Maximum number of correction iterations for hypothesis proofs",
             "max_iteration_final_proof": "Maximum number of iterations for final proof generation",
             "max_correction_iteration_final_proof": "Maximum number of correction iterations for final proof",
-            "allowed_models": "List of allowed AI models for each proof stage"
-        }
+            "allowed_models": "List of allowed AI models for each proof stage",
+        },
     }
