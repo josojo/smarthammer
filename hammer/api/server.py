@@ -22,6 +22,7 @@ from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
 from hammer.api.logging import LogStreamHandler, redis_pubsub
 from hammer.api.types import AIForHypothesesProof
+from hammer.api.config import SOLVER_LIMITS
 
 app = FastAPI()
 # Configure Redis connection and queue
@@ -57,7 +58,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",  # React default port (alternative URL)
         "http://localhost:5173",  # Vite default port
         "http://127.0.0.1:5173",
-        "http://your-production-domain.com",
+        "https://owlgebra.vercel.app",  # Add your Vercel domain
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
@@ -94,9 +95,9 @@ class TheoremRequest(BaseModel):
     name: str
     hypotheses: List[str]
     goal: str
-    ai_for_hypotheses_generation: AIForHypothesesProof
-    ai_for_hyptheses_proof: AIForHypothesesProof
-    ai_for_final_proof: AIForHypothesesProof
+    ai_for_hypotheses_generation: AIForHypothesesProof = AIForHypothesesProof.CLAUDE
+    ai_for_hyptheses_proof: AIForHypothesesProof = AIForHypothesesProof.CLAUDE
+    ai_for_final_proof: AIForHypothesesProof = AIForHypothesesProof.CLAUDE
     max_iteration_hypotheses_proof: int = 1
     max_correction_iteration_hypotheses_proof: int = 1
     max_iteration_final_proof: int = 1
@@ -306,4 +307,33 @@ async def clean_failed_tasks():
     return {
         "deleted_jobs": deleted_jobs,
         "message": "All failed jobs have been deleted.",
+    }
+
+
+@app.get("/solver-config/")
+async def get_solver_config():
+    """
+    Returns the current solver configuration limits.
+    """
+    return {
+        "limits": {
+            "iterations": {
+                "max_iteration_hypotheses_proof": SOLVER_LIMITS.max_iteration_hypotheses_proof,
+                "max_correction_iteration_hypotheses_proof": SOLVER_LIMITS.max_correction_iteration_hypotheses_proof,
+                "max_iteration_final_proof": SOLVER_LIMITS.max_iteration_final_proof,
+                "max_correction_iteration_final_proof": SOLVER_LIMITS.max_correction_iteration_final_proof,
+            },
+            "allowed_models": {
+                "hypothesis_generation": [model.value for model in SOLVER_LIMITS.allowed_hypothesis_generation_models],
+                "hypothesis_proof": [model.value for model in SOLVER_LIMITS.allowed_hypothesis_proof_models],
+                "final_proof": [model.value for model in SOLVER_LIMITS.allowed_final_proof_models],
+            }
+        },
+        "description": {
+            "max_iteration_hypotheses_proof": "Maximum number of iterations for hypothesis proof generation",
+            "max_correction_iteration_hypotheses_proof": "Maximum number of correction iterations for hypothesis proofs",
+            "max_iteration_final_proof": "Maximum number of iterations for final proof generation",
+            "max_correction_iteration_final_proof": "Maximum number of correction iterations for final proof",
+            "allowed_models": "List of allowed AI models for each proof stage"
+        }
     }
