@@ -62,6 +62,8 @@ class LogStreamHandler(logging.Handler):
             "httpcore",
             "httpx",
             "rq.scheduler",
+            "rq.worker",
+            "rq",
         ]
 
     def set_step(self, step):

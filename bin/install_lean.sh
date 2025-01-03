@@ -33,8 +33,10 @@ elan default $LEAN_VERSION
 lake update
 lake build
 cd test/Mathlib
+echo "Downloading Mathlib..."
 lake exe cache get > /dev/null
 
+echo "Copying built files to app directory..."
 # Copy built files to the app directory
 mkdir -p /app/repl
 cp -r "$WORK_DIR/repl"/* /app/repl/
