@@ -38,7 +38,9 @@ lake exe cache get > /dev/null
 
 echo "Copying built files to home directory..."
 mkdir -p "$HOME/repl"
-cp -r "$WORK_DIR/repl"/* "$HOME/repl/"
+cp -r "$WORK_DIR/repl"/* "/app/repl/"
+ls -al "$WORK_DIR/repl"
+ls -al "/app/repl"
 
 # Add a marker file to indicate successful installation
 touch "$HOME/repl/.installation_complete"
