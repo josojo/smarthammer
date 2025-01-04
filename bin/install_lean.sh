@@ -44,3 +44,10 @@ cp -r "$WORK_DIR/repl"/* "$HOME/repl/"
 touch "$HOME/repl/.installation_complete"
 
 echo "REPL setup completed successfully"
+
+echo "Final contents of /app before slug creation:"
+ls -alR /app
+
+echo "Final contents of /app/repl:"
+ls -al /app/repl
+
