@@ -48,6 +48,9 @@ ENV REPLPATH=/app/repl/test/Mathlib
 # This should be near the end as it changes frequently
 COPY . .
 
+# Install the local package in development mode
+RUN pip install -e .
+
 # Return to app directory
 WORKDIR /app
 

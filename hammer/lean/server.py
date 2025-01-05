@@ -53,13 +53,6 @@ class LeanServer:
             timeout=300,  # Add 5 minute timeout
         )
 
-        # Add initial expect for REPL startup
-        try:
-            self.proc.expect(">>", timeout=300)  # Wait for REPL prompt
-        except pexpect.TIMEOUT:
-            logger.error("REPL failed to start within 5 minutes")
-            raise
-
         # Fix: Create a file-like object that handles encoding
         class EncodedStream:
             def __init__(self, stream):
