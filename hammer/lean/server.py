@@ -6,6 +6,7 @@ import pexpect
 from dotenv import load_dotenv
 import logging
 import sys
+import signal
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,15 @@ class LeanServer:
             cwd=path_to_repl,
             encoding="utf-8",
             echo=False,
+            timeout=300,  # Add 5 minute timeout
         )
+
+        # Add initial expect for REPL startup
+        try:
+            self.proc.expect(">>", timeout=300)  # Wait for REPL prompt
+        except pexpect.TIMEOUT:
+            logger.error("REPL failed to start within 5 minutes")
+            raise
 
         # Fix: Create a file-like object that handles encoding
         class EncodedStream:
@@ -92,19 +101,24 @@ class LeanServer:
         self.proc.sendline()
 
         try:
+            # Adjust timeout and expect pattern
+            self.proc.expect(r'(?:\{.*"env": \d+\})|(?:>>)', timeout=300)
+            output = self.proc.before + (
+                self.proc.match.group() if self.proc.match else ""
+            )
+
+            if verbose:
+                logger.debug(f"Raw output: {output}")
+
+            # Try to parse JSON, handle potential formatting issues
             try:
-                self.proc.expect(r'env": \d+\}', timeout=100)
-                output = self.proc.before + self.proc.match.group()
-                if verbose:
-                    logger.debug(
-                        f"Receiving the following simulation output\n \033[35m{output}\033[0m"
-                    )
                 return json.loads(output)
-            except pexpect.exceptions.EOF:
-                logger.error("EOF. Current buffer contents:")
-                logger.error(self.proc.before)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse JSON: {output}")
                 raise
+
         except pexpect.exceptions.TIMEOUT:
             logger.error("TIMEOUT. Current buffer contents:")
             logger.error(self.proc.before)
-            raise pexpect.exceptions.TIMEOUT
+            self.proc.kill(signal.SIGTERM)  # Kill hanging process
+            raise

@@ -11,10 +11,7 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy application files
-COPY . .
-
-# Install Python dependencies
+# Copy only requirements first to leverage Docker cache
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
@@ -24,20 +21,19 @@ RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -
 # Add Elan to PATH
 ENV PATH="/root/.elan/bin:$PATH"
 
-# Setup REPL
+# Install Lean
+# Setup REPL directory and clone
 WORKDIR /app/repl
-RUN git clone https://github.com/leanprover-community/repl.git .
-
-# Install specific Lean version from toolchain
-RUN elan default $(cat lean-toolchain)
-
-# Build REPL
-RUN lake update && \
+RUN --mount=type=cache,target=/root/.cache/lake \
+    git clone https://github.com/leanprover-community/repl.git . && \
+    elan default $(cat lean-toolchain) && \
+    lake update && \
     lake build
 
-# Setup Mathlib
+# Setup Mathlib with cache
 WORKDIR /app/repl/test/Mathlib
-RUN lake exe cache get
+RUN --mount=type=cache,target=/root/.cache/lake \
+    lake exe cache get
 
 # Debug step to verify REPL setup
 RUN ls -la /app/repl/test/Mathlib && \
@@ -48,11 +44,21 @@ RUN ls -la /app/repl/test/Mathlib && \
 # Set environment variable for REPL path
 ENV REPLPATH=/app/repl/test/Mathlib
 
+# Copy the rest of your application files
+# This should be near the end as it changes frequently
+COPY . .
+
 # Return to app directory
 WORKDIR /app
 
 # Expose port (adjust if needed)
 EXPOSE 8000
 
+# Add memory limits for container
+# 4GB for Lean
+ENV LEAN_MEMORY=4096
+# 2GB for Lake
+ENV LAKE_MEMORY=2048
+
 # Start command using the same structure as your Procfile
-CMD ["sh", "-c", "uvicorn hammer.api.server:app --host 0.0.0.0 --port ${PORT:-8000} & python -m hammer.worker"] 
+CMD ["sh", "-c", "ulimit -v $((LEAN_MEMORY * 1024)) && uvicorn hammer.api.server:app --host 0.0.0.0 --port ${PORT:-8000} & python -m hammer.worker"] 

@@ -96,24 +96,29 @@ curl -N http://localhost:8000/logs/{task_id}
 
 ## Deployment
 
-# Login to Azure
+### Local deployment with Docker:
+
+
+### Azure deployment
+
+#### Login to Azure
 az login
 
-# Create a resource group
+#### Create a resource group
 az group create --name smarthammer-rg --location eastus
 
-# Create Azure Container Registry (ACR)
+#### Create Azure Container Registry (ACR)
 az acr create --resource-group smarthammer-rg --name smarthammerrepo --sku Basic
 az acr login --name smarthammerrepo
 
-# Build and push the images to ACR
+#### Build and push the images to ACR
 docker-compose build
 docker tag smarthammer_app smarthammerrepo.azurecr.io/smarthammer:latest
 docker tag redis:alpine smarthammerrepo.azurecr.io/redis:latest
 docker push smarthammerrepo.azurecr.io/smarthammer:latesdocker push smarthammerrepo.azurecr.io/smarthammer:latestt
 docker push smarthammerrepo.azurecr.io/redis:latest
 
-# Create Azure Cache for Redis (managed Redis service)
+#### Create Azure Cache for Redis (managed Redis service)
 az redis create \
   --resource-group smarthammer-rg \
   --name smarthammer-redis \
@@ -121,28 +126,33 @@ az redis create \
   --sku Basic \
   --vm-size c0
 
-# Create Container Apps environment
+#### Create Container Apps environment
 az containerapp env create \
   --name smarthammer-env \
   --resource-group smarthammer-rg \
   --location eastus
 
-# Deploy the application
+#### Deploy the application
 az containerapp create \
   --name smarthammer \
   --resource-group smarthammer-rg \
   --environment smarthammer-env \
-  --image smarthammerrepo.azurecr.io/smarthammer:latest \
+  --image josojo2/smarthammer:07ebd72f11ce838cce5ed1fdd39e567e5a1336f2 \
   --target-port 8000 \
   --ingress external \
-  --env-vars "REDIS_URL=redis://<redis-hostname>:6379"
+  --min-replicas 1 \
+  --max-replicas 1 \
+  --set-env-vars \
+    REDIS_URL="rediss://:<pwd>@smarthammer-redis.redis.cache.windows.net:6379" \
+    REPLPATH="/app/repl/test/Mathlib" \
+    PORT="8000"
 
-# Enable monitoring
+#### Enable monitoring
 az monitor log-analytics workspace create \
   --resource-group smarthammer-rg \
   --workspace-name smarthammer-logs
 
-# Link it to your container app
+#### Link it to your container app
 az containerapp env update \
   --name smarthammer-env \
   --resource-group smarthammer-rg \
@@ -159,6 +169,14 @@ az containerapp update \
   --scale-rule-type http \
   --scale-rule-http-concurrency 100
 
+For testing:
+curl -X POST "https://smarthammer.thankfulwave-467bb2ec.eastus.azurecontainerapps.io/prove/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "thm1",
+    "hypotheses": ["(n : ℕ)", "(oh0 : 0 < n)"],
+    "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
+}'
 
 
 
