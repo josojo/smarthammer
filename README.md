@@ -60,6 +60,8 @@ brew install redis
 brew services start redis
 ```
 
+### Running without docker
+
 Starting the worker that executes tasks:
 
 ```cmd
@@ -73,6 +75,24 @@ starting the api server to accept requests:
 uvicorn hammer.api.server:app --reload
 ```
 
+### Running with docker
+
+Deployment
+
+```sh
+docker build -t hammer .  
+```
+
+And running:
+
+```sh
+ docker run --env-file .env \                                                                              
+  -p 8000:8000 \                   
+  hammer
+```
+
+## Requests examples
+
 Sending a request:
 
 ```cmd
@@ -82,6 +102,7 @@ curl -X POST "http://localhost:8000/prove/" -H "Content-Type: application/json" 
     "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
 }'
 ```
+
 To get the status
 
 ```cmd
@@ -93,93 +114,3 @@ And to get the streamed progress:
 ```cmd
 curl -N http://localhost:8000/logs/{task_id}
 ```
-
-## Deployment
-
-### Local deployment with Docker:
-
-
-### Azure deployment
-
-#### Login to Azure
-az login
-
-#### Create a resource group
-az group create --name smarthammer-rg --location eastus
-
-#### Create Azure Container Registry (ACR)
-az acr create --resource-group smarthammer-rg --name smarthammerrepo --sku Basic
-az acr login --name smarthammerrepo
-
-#### Build and push the images to ACR
-docker-compose build
-docker tag smarthammer_app smarthammerrepo.azurecr.io/smarthammer:latest
-docker tag redis:alpine smarthammerrepo.azurecr.io/redis:latest
-docker push smarthammerrepo.azurecr.io/smarthammer:latesdocker push smarthammerrepo.azurecr.io/smarthammer:latestt
-docker push smarthammerrepo.azurecr.io/redis:latest
-
-#### Create Azure Cache for Redis (managed Redis service)
-az redis create \
-  --resource-group smarthammer-rg \
-  --name smarthammer-redis \
-  --location eastus \
-  --sku Basic \
-  --vm-size c0
-
-#### Create Container Apps environment
-az containerapp env create \
-  --name smarthammer-env \
-  --resource-group smarthammer-rg \
-  --location eastus
-
-#### Deploy the application
-az containerapp create \
-  --name smarthammer \
-  --resource-group smarthammer-rg \
-  --environment smarthammer-env \
-  --image josojo2/smarthammer:07ebd72f11ce838cce5ed1fdd39e567e5a1336f2 \
-  --target-port 8000 \
-  --ingress external \
-  --min-replicas 1 \
-  --max-replicas 1 \
-  --set-env-vars \
-    REDIS_URL="rediss://:<pwd>@smarthammer-redis.redis.cache.windows.net:6379" \
-    REPLPATH="/app/repl/test/Mathlib" \
-    PORT="8000"
-
-### Updating after new push:
-az containerapp update \
-  --name smarthammer \
-  --resource-group smarthammer-rg \
-  --image josojo2/smarthammer:latest
-
-#### Enable monitoring
-az monitor log-analytics workspace create \
-  --resource-group smarthammer-rg \
-  --workspace-name smarthammer-logs
-
-#### Link it to your container app
-az containerapp env update \
-  --name smarthammer-env \
-  --resource-group smarthammer-rg \
-  --logs-workspace-id <workspace-id> \
-  --logs-workspace-key <workspace-key>
-
-# Configure scaling (optional)
-az containerapp update \
-  --name smarthammer \
-  --resource-group smarthammer-rg \
-  --min-replicas 1 \
-  --max-replicas 10 \
-  --scale-rule-name http-rule \
-  --scale-rule-type http \
-  --scale-rule-http-concurrency 100
-
-For testing:
-curl -X POST "https://smarthammer.thankfulwave-467bb2ec.eastus.azurecontainerapps.io/prove/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "thm1",
-    "hypotheses": ["(n : ℕ)", "(oh0 : 0 < n)"],
-    "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
-}'

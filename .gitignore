@@ -163,3 +163,5 @@ output.txt
 
 # Heroku deployment
 .DS_Store
+
+deployment.txt
