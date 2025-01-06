@@ -1,4 +1,38 @@
+import logging
 from hammer.proof.utils import extract_proof_from_text
+
+logger = logging.getLogger(__name__)
+
+
+def prompt_with_error_message(
+    previous_code, theorem_code, ans_code, error_messages
+) -> str:
+    prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+    return prompt
+
+
+def prompt_with_previous_code_and_cutoff(
+    previous_code, theorem_code, ans_code, error_messages
+) -> tuple[str, str]:
+    # Filter error messages to only include those with severity "error"
+    severe_errors = [msg for msg in error_messages if msg.get("severity") == "error"]
+    if severe_errors[0]["data"].startswith("unsolved goals"):
+        return [
+            prompt_with_error_message(
+                previous_code, theorem_code, ans_code, error_messages
+            ),
+            "",
+        ]
+    # Parse the line number from the first severe error
+    first_severe_error = (
+        severe_errors[0].get("pos", {}).get("line", None) if severe_errors else None
+    )
+
+    line_to_cut = first_severe_error - theorem_code.count("\n") - 1
+    if line_to_cut > 0:
+        ans_code = "\n".join(ans_code.split("\n")[:line_to_cut])
+    prompt = f"Finish the following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n "
+    return [prompt, ans_code]
 
 
 def retry_until_success(
@@ -13,7 +47,7 @@ def retry_until_success(
 ):
     # Count lines in hypothesis code
     hypothesis_lines = theorem_code.count("\n") + 1
-    for _ in range(0, max_correction_iteration):
+    for i in range(0, max_correction_iteration):
         error_messages = [
             msg for msg in result.get("messages", []) if msg.get("severity") == "error"
         ]
@@ -29,10 +63,18 @@ def retry_until_success(
             raise Exception(
                 f"Error occurred in hypothesis section (line {line_number}), cannot fix"
             )
-        prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+        previous_ans_code = ""
+        if api_client.name == "DeepSeek":
+            prompt, previous_ans_code = prompt_with_previous_code_and_cutoff(
+                previous_code, theorem_code, ans_code, error_messages
+            )
+        else:
+            prompt = prompt_with_error_message(
+                previous_code, theorem_code, ans_code, error_messages
+            )
         response = api_client.send(prompt, verbose)
         ans_code = extract_proof_from_text(response)[0]
-        code = theorem_code + "\n" + ans_code
+        code = theorem_code + "\n" + previous_ans_code + ans_code
         result = lean_client.run_code(code, 0, verbose)
         if isinstance(result, dict) and (
             "messages" not in result
@@ -40,6 +82,13 @@ def retry_until_success(
                 msg.get("severity") == "error" for msg in result.get("messages", [])
             )
         ):
+            if verbose:
+                logger.debug(f"Proof successfully corrected after {i} iterations")
             return ans_code
+        else:
+            if verbose:
+                logger.debug(
+                    f"The proof contains the following error/simulation output:\n {result}"
+                )
 
     return None

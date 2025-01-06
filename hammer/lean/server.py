@@ -88,8 +88,6 @@ class LeanServer:
             f"Sending the following command to the Lean REPL\n \033[35m{command}\033[0m"
         )
 
-        logger.debug(f"Sending command: {command}")
-
         try:
             self.proc.sendline(command)
             self.proc.sendline()
@@ -110,7 +108,9 @@ class LeanServer:
                     self.proc.match.group() if self.proc.match else ""
                 )
                 try:
-                    return json.loads(output)
+                    jsonText = json.loads(output)
+                    logger.debug(f"JSON response: {jsonText}")
+                    return jsonText
                 except json.JSONDecodeError:
                     logger.error(f"Failed to parse JSON: {output}")
                     return {"error": "Invalid JSON response", "raw_output": output}
