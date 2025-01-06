@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 # Add connection debugging
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 url = urlparse(redis_url)
-logger.debug(f"Redis URL parsed: scheme={url.scheme}, host={url.hostname}, port={url.port}")
+logger.debug(
+    f"Redis URL parsed: scheme={url.scheme}, host={url.hostname}, port={url.port}"
+)
 
 try:
     redis_conn = redis.Redis(
@@ -28,8 +30,8 @@ try:
         socket_connect_timeout=30,
         retry_on_timeout=True,
         decode_responses=False,
-        encoding='utf-8',
-        encoding_errors='replace'
+        encoding="utf-8",
+        encoding_errors="replace",
     )
     # Test connection
     redis_conn.ping()
@@ -46,6 +48,7 @@ job_timeout = 3600  # 1 hour
 # Add custom Job class to handle encoding issues
 from rq.job import Job
 
+
 class CustomJob(Job):
     @property
     def return_value(self):
@@ -53,8 +56,8 @@ class CustomJob(Job):
             return super().return_value
         except UnicodeDecodeError:
             # Handle binary data
-            value = self.connection.hget(self.key, 'result')
-            return value.decode('utf-8', errors='replace') if value else None
+            value = self.connection.hget(self.key, "result")
+            return value.decode("utf-8", errors="replace") if value else None
 
 
 def handle_timeout(signum, frame):
@@ -78,18 +81,18 @@ if __name__ == "__main__":
 
     # Create queue with default settings
     queue = Queue(
-        "theorem_prover", 
-        connection=redis_conn, 
-        default_timeout=3600, 
+        "theorem_prover",
+        connection=redis_conn,
+        default_timeout=3600,
         result_ttl=14400,
-        job_class=CustomJob
+        job_class=CustomJob,
     )
 
     worker = Worker(
         queues=[queue],
         connection=redis_conn,
         worker_ttl=default_worker_ttl,
-        job_class=CustomJob
+        job_class=CustomJob,
     )
 
     # Start the worker with exception handling
