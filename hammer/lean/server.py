@@ -42,8 +42,11 @@ class LeanServer:
         if not os.path.exists(full_repl_path):
             raise FileNotFoundError(f"REPL binary not found at {full_repl_path}")
 
+        # Add more detailed logging before spawning process
+        logger.info(f"Memory settings - LEAN_MEMORY: {os.getenv('LEAN_MEMORY')}, LAKE_MEMORY: {os.getenv('LAKE_MEMORY')}")
+        
         command = f"/bin/bash -c 'stty -icanon && lake env {repl_binary}'"
-        logger.debug(f"Executing command: {command}")
+        logger.info(f"Spawning REPL with command: {command}")
 
         self.proc = pexpect.spawn(
             command,
@@ -75,6 +78,9 @@ class LeanServer:
 
     def run_code(self, code, env=None, verbose=False):
         """Execute Lean code in the REPL."""
+        if not self.proc.isalive():
+            raise Exception("REPL process is not alive")
+
         if env is not None:
             command = (
                 json.dumps(
@@ -90,28 +96,44 @@ class LeanServer:
             f"Sending the following command to the Lean REPL\n \033[35m{command}\033[0m"
         )
 
-        self.proc.sendline(command)
-        self.proc.sendline()
+        logger.debug(f"Sending command: {command}")
 
         try:
-            # Adjust timeout and expect pattern
-            self.proc.expect(r'(?:\{.*"env": \d+\})|(?:>>)', timeout=300)
-            output = self.proc.before + (
-                self.proc.match.group() if self.proc.match else ""
-            )
+            self.proc.sendline(command)
+            self.proc.sendline()
 
-            if verbose:
-                logger.debug(f"Raw output: {output}")
+            # Add pattern for error messages
+            patterns = [
+                r'(?:\{.*"env": \d+\})',
+                r'>>',
+                r'error:.*$',
+                pexpect.EOF,
+                pexpect.TIMEOUT
+            ]
 
-            # Try to parse JSON, handle potential formatting issues
-            try:
-                return json.loads(output)
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse JSON: {output}")
-                raise
+            index = self.proc.expect(patterns, timeout=300)
+            
+            if index == 0 or index == 1:  # Success cases
+                output = self.proc.before + (self.proc.match.group() if self.proc.match else "")
+                try:
+                    return json.loads(output)
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse JSON: {output}")
+                    return {"error": "Invalid JSON response", "raw_output": output}
+            elif index == 2:  # Error message
+                error_msg = self.proc.match.group()
+                logger.error(f"Lean error: {error_msg}")
+                return {"error": error_msg}
+            elif index == 3:  # EOF
+                raise Exception("REPL process ended unexpectedly")
+            else:  # TIMEOUT
+                logger.error("Command timed out")
+                logger.error(f"Buffer contents: {self.proc.before}")
+                self.proc.kill(signal.SIGTERM)
+                raise Exception("Command execution timed out")
 
-        except pexpect.exceptions.TIMEOUT:
-            logger.error("TIMEOUT. Current buffer contents:")
-            logger.error(self.proc.before)
-            self.proc.kill(signal.SIGTERM)  # Kill hanging process
+        except Exception as e:
+            logger.error(f"Error executing command: {str(e)}")
+            logger.error(f"Process status: {self.proc.status}")
+            logger.error(f"Last output: {self.proc.before}")
             raise

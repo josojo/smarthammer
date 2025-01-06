@@ -147,6 +147,12 @@ az containerapp create \
     REPLPATH="/app/repl/test/Mathlib" \
     PORT="8000"
 
+### Updating after new push:
+az containerapp update \
+  --name smarthammer \
+  --resource-group smarthammer-rg \
+  --image josojo2/smarthammer:latest
+
 #### Enable monitoring
 az monitor log-analytics workspace create \
   --resource-group smarthammer-rg \
@@ -177,7 +183,3 @@ curl -X POST "https://smarthammer.thankfulwave-467bb2ec.eastus.azurecontainerapp
     "hypotheses": ["(n : ℕ)", "(oh0 : 0 < n)"],
     "goal": "Nat.gcd (21*n + 4) (14*n + 3) = 1"
 }'
-
-
-
-

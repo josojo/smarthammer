@@ -8,22 +8,53 @@ import redis
 
 logger = logging.getLogger(__name__)
 
-# Configure Redis connection
+# Add debug logging at the start
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Add connection debugging
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 url = urlparse(redis_url)
-# Configure Redis connection with the connection pool
-redis_conn = redis.Redis(
-    host=url.hostname,
-    port=url.port,
-    password=url.password,
-    ssl=(url.scheme == "rediss"),
-    ssl_cert_reqs=None,
-)
+logger.debug(f"Redis URL parsed: scheme={url.scheme}, host={url.hostname}, port={url.port}")
+
+try:
+    redis_conn = redis.Redis(
+        host=url.hostname,
+        port=url.port,
+        password=url.password,
+        ssl=(url.scheme == "rediss"),
+        ssl_cert_reqs=None,
+        socket_timeout=30,
+        socket_connect_timeout=30,
+        retry_on_timeout=True,
+        decode_responses=False,
+        encoding='utf-8',
+        encoding_errors='replace'
+    )
+    # Test connection
+    redis_conn.ping()
+    logger.info("Successfully connected to Redis")
+except Exception as e:
+    logger.error(f"Redis connection failed: {str(e)}", exc_info=True)
+    raise
 
 # Worker configuration
 default_worker_ttl = 7200  # 2 hours
 default_result_ttl = 14400  # 4 hours
 job_timeout = 3600  # 1 hour
+
+# Add custom Job class to handle encoding issues
+from rq.job import Job
+
+class CustomJob(Job):
+    @property
+    def return_value(self):
+        try:
+            return super().return_value
+        except UnicodeDecodeError:
+            # Handle binary data
+            value = self.connection.hget(self.key, 'result')
+            return value.decode('utf-8', errors='replace') if value else None
 
 
 def handle_timeout(signum, frame):
@@ -47,13 +78,18 @@ if __name__ == "__main__":
 
     # Create queue with default settings
     queue = Queue(
-        "theorem_prover", connection=redis_conn, default_timeout=3600, result_ttl=14400
+        "theorem_prover", 
+        connection=redis_conn, 
+        default_timeout=3600, 
+        result_ttl=14400,
+        job_class=CustomJob
     )
 
     worker = Worker(
         queues=[queue],
         connection=redis_conn,
-        worker_ttl=default_worker_ttl,  # Set appropriate TTL
+        worker_ttl=default_worker_ttl,
+        job_class=CustomJob
     )
 
     # Start the worker with exception handling
