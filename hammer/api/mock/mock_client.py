@@ -20,10 +20,10 @@ class Client:
     def send(self, message, verbose=False):
         """Send a message to Claude and return its response."""
         if verbose:
-            print(f"Sending message to Claude: {message}")
+            print(f"Sending message to Mock: {message}")
         output = self.return_outputs[self.call_count]
         self.call_count += 1
 
         if verbose:
-            print(f"Received response from Claude: {output}")
+            print(f"Received response from Mock: {output}")
         return output

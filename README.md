@@ -86,9 +86,7 @@ docker build -t hammer .
 And running:
 
 ```sh
- docker run --env-file .env \                                                                              
-  -p 8000:8000 \                   
-  hammer
+docker run --env-file .env -p 8000:8000 hammer
 ```
 
 ## Requests examples

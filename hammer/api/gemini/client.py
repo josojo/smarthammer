@@ -1,9 +1,8 @@
 """Client module for interacting with OPEN AI via openai's API."""
 
 import os
-from openai import OpenAI
-import json
 from hammer.api.base_client import AIClient
+from google import genai
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,11 +11,8 @@ class Client(AIClient):
     """Client wrapper for OpenAI API interactions."""
 
     def __init__(self, model: str = "o1-mini"):
-        self.client = OpenAI(
-            organization=os.getenv("OPENAI_ORG_ID"),
-            project=os.getenv("OPENAI_PROJECT_ID"),
-        )
-        self._name = "OpenAI"
+        self.client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+        self._name = "GEMINI"
         self.model = model
 
     def send(self, message: str, verbose: bool = False) -> str:
@@ -30,17 +26,14 @@ class Client(AIClient):
             str: The AI's response
         """
         if verbose:
-            logger.debug(f"Sending message to Open ai: {message}")
-        result = self.client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": message,
-                }
-            ],
-            model=self.model,
+            logger.debug(f"Sending message to Gemini:\n \033[33m {message} \n \n \033[0m")
+
+        result = self.client.models.generate_content(
+            model='gemini-1.5-flash', contents=message
         )
-        content = result.choices[0].message.content
+        content = result.candidates[0].content.parts[0].text
         if verbose:
-            logger.debug(f"Received response from OpenAI: {content}")
+            logger.debug(
+                        f"Received response from GEMINI:\n \033[33m {content}\033[0m"
+                    )
         return content
