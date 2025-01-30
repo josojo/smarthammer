@@ -2,9 +2,7 @@ from pydantic import BaseModel
 from typing import List
 import os
 from hammer.api.types import AIForHypothesesProof
-from hammer.api.deepseek_official.client import Client as DeepSeekOfficialClient
-from hammer.api.gemini.client import Client as GeminiClient
-from hammer.api.claude.client import Client as ClaudeClient
+from hammer.api.openrouter.client import Client as OpenRouterClient
 from hammer.api.deepseek.client import Client as DeepSeekClient
 from hammer.api.openai.client import Client as OpenAIClient
 from hammer.api.mock.mock_client import Client as MockClient
@@ -64,21 +62,25 @@ class SolverLimits(BaseModel):
         AIForHypothesesProof.GEMINI,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.DEEPSEEK_1_5,
-        AIForHypothesesProof.OPENAI_O1,  # Currently mocked
-        AIForHypothesesProof.OPENAI_4O,
         AIForHypothesesProof.DEEPSEEK_R1,
+        # AIForHypothesesProof.OPENAI_4O,
+        # AIForHypothesesProof.MOCK,
+        # AIForHypothesesProof.OPENAI_O1,
     ]
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
+        AIForHypothesesProof.DEEPSEEK_R1,
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
+        AIForHypothesesProof.DEEPSEEK_R1,
+        # AIForHypothesesProof.OPENAI_O1,
     ]
 
 
@@ -144,8 +146,26 @@ def validate_inputs(kwargs, logger):
         logger.warning("o1 is currently only mocked.")
 
 
+def return_ai_client(ai_name):
+    if ai_name == AIForHypothesesProof.CLAUDE:
+        return OpenRouterClient("anthropic/claude-3.5-sonnet")
+    elif ai_name == AIForHypothesesProof.DEEPSEEK_1_5:
+        deepseek_url = os.getenv("DEEPSEEK_URL")
+        return DeepSeekClient(base_url=deepseek_url)
+    elif ai_name == AIForHypothesesProof.GEMINI:
+        return OpenRouterClient("google/gemini-2.0-flash-thinking-exp:free")
+    elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
+        return OpenRouterClient("deepseek/deepseek-r1")
+    elif ai_name == AIForHypothesesProof.MOCK:
+        return MockClient([api_output_1])
+    elif ai_name == AIForHypothesesProof.OPENAI_O1:
+        return OpenAIClient("o1")
+    elif ai_name == AIForHypothesesProof.OPENAI_4O:
+        return OpenRouterClient("openai/gpt-4o-2024-11-20")
+    else:
+        raise ValueError(f"Unknown AI client type: {ai_name}")
+
 def get_solver_configs(kwargs) -> dict:
-    deepseek_url = os.getenv("DEEPSEEK_URL")
 
     # Create config object to store all variables
     config = {
@@ -160,61 +180,12 @@ def get_solver_configs(kwargs) -> dict:
         'verbose': kwargs["verbose"]
     }
 
-    # Initialize lean client and proof state
+    # Initialize lean client 
     config['lean_client'] = LeanServer(config['code_env_0'])
-    
 
-    # Initialize hypothesis search client based on parameter
-    ai_for_hypotheses_generation = kwargs["ai_for_hypotheses_generation"]
-    if ai_for_hypotheses_generation == AIForHypothesesProof.CLAUDE:
-        config['api_client_for_hypothesis_search'] = ClaudeClient()
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.DEEPSEEK_1_5:
-        config['api_client_for_hypothesis_search'] = DeepSeekClient(base_url=deepseek_url)
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.GEMINI:
-        config['api_client_for_hypothesis_search'] = GeminiClient()
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.DEEPSEEK_R1:
-        config['api_client_for_hypothesis_search'] = DeepSeekOfficialClient()
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.MOCK:
-        config['api_client_for_hypothesis_search'] = MockClient([api_output_1])
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_O1:
-        config['api_client_for_hypothesis_search'] = OpenAIClient("o1")
-    elif ai_for_hypotheses_generation == AIForHypothesesProof.OPENAI_4O:
-        config['api_client_for_hypothesis_search'] = OpenAIClient("gpt-4o")
-    else:
-        raise ValueError(f"Unknown AI client type: {ai_for_hypotheses_generation}")
-
-    # Initialize proof client based on parameter
-    ai_for_hyptheses_proof = kwargs["ai_for_hyptheses_proof"]
-    if ai_for_hyptheses_proof == AIForHypothesesProof.CLAUDE:
-        config['api_client_for_proofing'] = [ClaudeClient()]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.GEMINI:
-        config['api_client_for_proofing'] = [GeminiClient()]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.DEEPSEEK_R1:
-        config['api_client_for_proofing'] = [DeepSeekOfficialClient()]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.DEEPSEEK_1_5:
-        config['api_client_for_proofing'] = [DeepSeekClient(base_url=deepseek_url)]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_O1:
-        config['api_client_for_proofing'] = [OpenAIClient("o1")]
-    elif ai_for_hyptheses_proof == AIForHypothesesProof.OPENAI_4O:
-        config['api_client_for_proofing'] = [OpenAIClient("gpt-4o")]
-    else:
-        raise ValueError(f"Unknown AI client type: {ai_for_hyptheses_proof}")
-
-    # Initialize final proof client
-    ai_for_final_proof = kwargs["ai_for_final_proof"]
-    if ai_for_final_proof == AIForHypothesesProof.CLAUDE:
-        config['final_proof_client'] = ClaudeClient()
-    elif ai_for_final_proof == AIForHypothesesProof.GEMINI:
-        config['final_proof_client'] = GeminiClient()
-    elif ai_for_final_proof == AIForHypothesesProof.DEEPSEEK_R1:
-        config['final_proof_client'] = DeepSeekOfficialClient()
-    elif ai_for_final_proof == AIForHypothesesProof.DEEPSEEK_1_5:
-        config['final_proof_client'] = DeepSeekClient(base_url=deepseek_url)
-    elif ai_for_final_proof == AIForHypothesesProof.OPENAI_O1:
-        config['final_proof_client'] = OpenAIClient("o1")
-    elif ai_for_final_proof == AIForHypothesesProof.OPENAI_4O:
-        config['final_proof_client'] = OpenAIClient("gpt-4o")
-    else:
-        raise ValueError(f"Unknown AI client type: {ai_for_final_proof}")
+    # Initialize AI clients
+    config['api_client_for_hypothesis_search'] = return_ai_client(kwargs["ai_for_hypotheses_generation"])
+    config['api_client_for_proofing'] = [return_ai_client(kwargs["ai_for_hyptheses_proof"])]
+    config['final_proof_client'] = return_ai_client(kwargs["ai_for_final_proof"])
 
     return config
