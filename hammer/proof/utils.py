@@ -8,13 +8,19 @@ def unicode_escape(input_str):
 
 
 def extract_lean_blocks(text: str) -> list[str]:
-    """Extract code from lean code blocks marked with ```lean ... ```."""
+    """Extract code from lean code blocks marked with ```lean ... ``` or ```lean4 ... ```."""
     blocks = []
-    parts = text.split("```lean")
+
+    # Determine which marker to use based on the presence of `lean4`
+    if "```lean4" in text:
+        parts = text.split("```lean4")
+    else:
+        parts = text.split("```lean")
+
     if len(parts) == 1 and "```" in parts[0]:
         code = parts[0].split("```")[0]
         blocks.append("\n" + code)
-    for part in parts[1:]:  # Skip first part before any ```lean
+    for part in parts[1:]:  # Skip first part before any ```lean or ```lean4
         if "```" in part:
             code = part.split("```")[0]
             blocks.append(code)
