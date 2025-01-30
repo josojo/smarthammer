@@ -1,11 +1,12 @@
 import sys
-import time
 from hammer.api.logging import LogStreamHandler, ContextualLoggerAdapter
-from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState, Hypothesis
+from hammer.proof.proof import ProofSearchState
 
-from hammer.api.base_client import AIClient
-from hammer.proof.retry import retry_until_success
+from hammer.proof.proofsteps.final_proof_assembly import find_final_proof
+from hammer.proof.proofsteps.hypothesis_proving import (
+    prove_theorem_via_hypotheses_search,
+)
+from hammer.proof.proofsteps.hypothesis_search import find_hypotheses
 from rq import get_current_job
 import logging
 from dotenv import load_dotenv
@@ -14,191 +15,9 @@ import psutil
 from hammer.api.config import get_solver_configs, validate_inputs
 
 
-
 load_dotenv()
 logger = logging.getLogger(__name__)
 contextual_logger = ContextualLoggerAdapter(logger, {"step": "Starting Proof"})
-
-
-def iterate_until_valid_proof(
-    proof_state: ProofSearchState,
-    hyptotheses_number,
-    client: AIClient,
-    lean_client: LeanServer,
-    max_iteration=1,
-    max_correction_iteration=1,
-    verbose=False,
-):
-    cnt = 0
-    starting_code = ""
-    while cnt < max_iteration:
-        proof_candidate = proof_state.generate_proof_candidate_for_hypotheses(
-            client, hyptotheses_number, starting_code, verbose
-        )
-        if proof_candidate:
-            code = proof_state.hypothesis_as_code(hyptotheses_number) + proof_candidate
-            result = lean_client.run_code(code, 0, verbose)
-            if isinstance(result, dict) and (
-                "messages" not in result
-                or not any(
-                    msg.get("severity") == "error" for msg in result.get("messages", [])
-                )
-            ):
-                return proof_candidate
-            else:
-                proof = retry_until_success(
-                    client,
-                    lean_client,
-                    proof_state.previous_code,
-                    proof_state.hypothesis_as_code(hyptotheses_number),
-                    proof_candidate,
-                    result,
-                    max_correction_iteration,
-                    verbose,
-                )
-                if proof:
-                    return proof
-        cnt += 1
-    return None
-
-
-def iterate_until_valid_final_proof(
-    proof_state: ProofSearchState,
-    client: AIClient,
-    lean_client: LeanServer,
-    max_iteration=1,
-    max_correction_iteration=1,
-    verbose=False,
-):
-    cnt = 0
-    starting_code = ""
-    while cnt < max_iteration:
-        proof_candidate = proof_state.generate_final_proof(
-            client, starting_code, verbose
-        )
-        if proof_candidate:
-            code = proof_state.get_theorem_code() + proof_candidate
-            result = lean_client.run_code(code, 0, verbose)
-            if isinstance(result, dict) and (
-                "messages" not in result
-                or not any(
-                    msg.get("severity") == "error" for msg in result.get("messages", [])
-                )
-            ):
-                return proof_candidate
-            else:
-                try:
-                    proof = retry_until_success(
-                        client,
-                        lean_client,
-                        proof_state.previous_code,
-                        proof_state.get_theorem_code(),
-                        proof_candidate,
-                        result,
-                        max_correction_iteration,
-                        verbose,
-                    )
-                    if proof:
-                        return proof
-                except Exception as e:
-                    logger.error(f"Error while proving final proof: {e}")
-        cnt += 1
-    return None
-
-
-def prove_theorem_via_hypotheses_search(
-    proof_state: ProofSearchState,
-    api_client_for_hypothesis_search: AIClient,
-    api_client_for_proofing: list[AIClient],
-    lean_client: LeanServer,
-    max_iteration_hypotheses_proof=1,
-    max_correction_iteration_hypotheses_proof=1,
-    verbose=False,
-    log_handler: LogStreamHandler = None,
-):
-
-    if not log_handler:
-        log_handler = LogStreamHandler("")
-    logger.debug("Searching for hypotheses:")
-    proof_state.add_hypotheses(api_client_for_hypothesis_search, verbose)
-    logger.debug("Added hypotheses")
-    logger.debug(f"Theoretical hypotheses: {proof_state.theoretical_hypotheses}")
-
-    # Try to generate proofs for different numbers of hypotheses
-    valid_proofs = []
-    not_valid_formulations = []
-    for i in range(len(proof_state.theoretical_hypotheses)):
-        log_handler.set_step(f"Proofing Hypotheses {i}")
-        logger.debug(f"Searching proof for hypothesis {i}")
-        for api_client in api_client_for_proofing:
-            try:
-                proof = iterate_until_valid_proof(
-                    proof_state,
-                    i,
-                    api_client,
-                    lean_client,
-                    max_iteration_hypotheses_proof,
-                    max_correction_iteration_hypotheses_proof,
-                    verbose,
-                )
-                if proof:
-                    proof_state.proven_hypotheses.append(
-                        Hypothesis(
-                            "p" + str(len(proof_state.proven_hypotheses)),
-                            proof_state.theoretical_hypotheses[i],
-                            proof,
-                        )
-                    )
-                    valid_proofs.append(i)
-            except Exception as e:
-                logger.error(f"Error while proving hypothesis: {e}")
-                not_valid_formulations.append(i)
-
-    # Count occurrences of each index in not_valid_formulations
-    not_valid_counts = {
-        i: not_valid_formulations.count(i) for i in set(not_valid_formulations)
-    }
-
-    # Determine indices to remove based on the number of appearances in not_valid_formulations
-    indices_to_remove = [
-        i
-        for i in not_valid_counts
-        if not_valid_counts[i] == len(api_client_for_proofing)
-    ]
-
-    # Sort in reverse order to safely remove from list
-    indices_to_remove = sorted(indices_to_remove, reverse=True)
-
-    for i in indices_to_remove:
-        proof_state.theoretical_hypotheses.pop(i)
-
-    logger.info(
-        f"In total {len(proof_state.proven_hypotheses)} hypotheses proven from initially "
-        f"{len(proof_state.theoretical_hypotheses) + len(proof_state.proven_hypotheses)} available ones"
-    )
-    return proof_state
-
-
-def find_final_proof(
-    proof_state: ProofSearchState,
-    api_client,
-    lean_client,
-    max_iteration_final_proof=1,
-    max_iternation_correction_proof=1,
-    verbose=False,
-):
-    proof = iterate_until_valid_final_proof(
-        proof_state,
-        api_client,
-        lean_client,
-        max_iteration_final_proof,
-        max_iternation_correction_proof,
-        verbose,
-    )
-    if proof:
-        proof_state.proof = proof_state.build_final_proof(proof)
-    return proof_state.proof
-
 
 
 def prove_theorem(**kwargs):
@@ -235,31 +54,36 @@ def prove_theorem(**kwargs):
         config = get_solver_configs(kwargs)
 
         proof_state = ProofSearchState(
-                config['name'], 
-                config['hypotheses'],
-                config['code_env_0'],
-                config['goal']
-            )
+            config["name"], config["hypotheses"], config["code_env_0"], config["goal"]
+        )
+
         log_handler.set_step("Adding Hypotheses")
+        find_hypotheses(
+            proof_state,
+            config["api_client_for_hypothesis_search"],
+            verbose=config["verbose"],
+            log_handler=log_handler,
+        )
+
+        log_handler.set_step("Proving Hypotheses")
         prove_theorem_via_hypotheses_search(
             proof_state,
-            config['api_client_for_hypothesis_search'],
-            config['api_client_for_proofing'],
-            config['lean_client'],
-            config['max_iteration_hypotheses_proof'],
-            config['max_correction_iteration_hypotheses_proof'],
-            verbose=config['verbose'],
+            config["hypothesis_proof_client"],
+            config["lean_client"],
+            config["max_iteration_hypotheses_proof"],
+            config["max_correction_iteration_hypotheses_proof"],
+            verbose=config["verbose"],
             log_handler=log_handler,
         )
 
         log_handler.set_step("Building Final Proof")
         find_final_proof(
             proof_state,
-            config['final_proof_client'],  # Use the selected final proof client'],
-            config['lean_client'],
-            config['max_iteration_final_proof'],
-            config['max_correction_iteration_final_proof'],
-            config['verbose'],
+            config["final_proof_client"],  # Use the selected final proof client'],
+            config["lean_client"],
+            config["max_iteration_final_proof"],
+            config["max_correction_iteration_final_proof"],
+            config["verbose"],
         )
 
         return proof_state

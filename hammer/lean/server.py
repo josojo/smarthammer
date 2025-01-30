@@ -119,7 +119,13 @@ class LeanServer:
                 logger.error(f"Lean error: {error_msg}")
                 return {"error": error_msg}
             elif index == 3:  # EOF
-                raise Exception("REPL process ended unexpectedly")
+                last_output = self.proc.before
+                logger.error(
+                    f"REPL process ended unexpectedly with EOF. Last output: {last_output}"
+                )
+                raise Exception(
+                    f"REPL process ended unexpectedly with EOF. Last output: {last_output}"
+                )
             else:  # TIMEOUT
                 logger.error("Command timed out")
                 logger.error(f"Buffer contents: {self.proc.before}")

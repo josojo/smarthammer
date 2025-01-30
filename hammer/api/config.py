@@ -50,6 +50,7 @@ lemma lem4 : ∀ x : ℕ, Nat.gcd x 1 = 1 ```,
 lemma lem5 : 14 * n + 3 - 2 * (7 * n + 1) = 1 
  """
 
+
 class SolverLimits(BaseModel):
     # Iteration limits
     max_iteration_hypotheses_proof: int = 10
@@ -86,6 +87,7 @@ class SolverLimits(BaseModel):
 
 # Global configuration instance
 SOLVER_LIMITS = SolverLimits()
+
 
 def validate_inputs(kwargs, logger):
     """Validate input parameters to ensure they are within acceptable limits."""
@@ -165,27 +167,36 @@ def return_ai_client(ai_name):
     else:
         raise ValueError(f"Unknown AI client type: {ai_name}")
 
+
 def get_solver_configs(kwargs) -> dict:
 
     # Create config object to store all variables
     config = {
-        'name': kwargs["name"],
-        'hypotheses': kwargs["hypotheses"], 
-        'code_env_0': kwargs["code_for_env_0"],
-        'goal': kwargs["goal"],
-        'max_iteration_hypotheses_proof': kwargs["max_iteration_hypotheses_proof"],
-        'max_correction_iteration_hypotheses_proof': kwargs["max_correction_iteration_hypotheses_proof"],
-        'max_iteration_final_proof': kwargs["max_iteration_final_proof"], 
-        'max_correction_iteration_final_proof': kwargs["max_correction_iteration_final_proof"],
-        'verbose': kwargs["verbose"]
+        "name": kwargs["name"],
+        "hypotheses": kwargs["hypotheses"],
+        "code_env_0": kwargs["code_for_env_0"],
+        "goal": kwargs["goal"],
+        "max_iteration_hypotheses_proof": kwargs["max_iteration_hypotheses_proof"],
+        "max_correction_iteration_hypotheses_proof": kwargs[
+            "max_correction_iteration_hypotheses_proof"
+        ],
+        "max_iteration_final_proof": kwargs["max_iteration_final_proof"],
+        "max_correction_iteration_final_proof": kwargs[
+            "max_correction_iteration_final_proof"
+        ],
+        "verbose": kwargs["verbose"],
     }
 
-    # Initialize lean client 
-    config['lean_client'] = LeanServer(config['code_env_0'])
+    # Initialize lean client
+    config["lean_client"] = LeanServer(config["code_env_0"])
 
     # Initialize AI clients
-    config['api_client_for_hypothesis_search'] = return_ai_client(kwargs["ai_for_hypotheses_generation"])
-    config['api_client_for_proofing'] = [return_ai_client(kwargs["ai_for_hyptheses_proof"])]
-    config['final_proof_client'] = return_ai_client(kwargs["ai_for_final_proof"])
+    config["api_client_for_hypothesis_search"] = return_ai_client(
+        kwargs["ai_for_hypotheses_generation"]
+    )
+    config["hypothesis_proof_client"] = [
+        return_ai_client(kwargs["ai_for_hyptheses_proof"])
+    ]
+    config["final_proof_client"] = return_ai_client(kwargs["ai_for_final_proof"])
 
     return config

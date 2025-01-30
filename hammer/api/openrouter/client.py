@@ -8,14 +8,15 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 class Client(AIClient):
     """Client wrapper for OpenAI API interactions."""
 
     def __init__(self, model: str = "o1-mini"):
         self.client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=os.getenv("OPENROUTER_API_KEY"),
-                )
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+        )
         self._name = "DeepSeek R1"
         self.model = model
 
@@ -30,7 +31,9 @@ class Client(AIClient):
             str: The AI's response
         """
         if verbose:
-            logger.debug(f"Sending message to {self.model}:\n \033[33m {message} \n \n \033[0m")
+            logger.debug(
+                f"Sending message to {self.model}:\n \033[33m {message} \n \n \033[0m"
+            )
 
         max_retries = 3
         initial_retry_delay = 2
@@ -48,6 +51,9 @@ class Client(AIClient):
                     ],
                     model=self.model,
                 )
+                if result is None or not result.choices:
+                    raise ValueError("Received an invalid response from the API")
+
                 content = result.choices[0].message.content
                 if verbose:
                     logger.debug(

@@ -7,11 +7,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Client(AIClient):
     """Client wrapper for OpenAI API interactions."""
 
     def __init__(self, model: str = "o1-mini"):
-        self.client = OpenAI(api_key=os.getenv("DEEPSEEK_API_KEY"), base_url="https://api.deepseek.com")
+        self.client = OpenAI(
+            api_key=os.getenv("DEEPSEEK_API_KEY"), base_url="https://api.deepseek.com"
+        )
         self._name = "DeepSeek R1"
         self.model = model
 
@@ -26,7 +29,9 @@ class Client(AIClient):
             str: The AI's response
         """
         if verbose:
-            logger.debug(f"Sending message to {self.model}:\n \033[33m {message} \n \n \033[0m")
+            logger.debug(
+                f"Sending message to {self.model}:\n \033[33m {message} \n \n \033[0m"
+            )
         result = self.client.chat.completions.create(
             messages=[
                 {
@@ -39,6 +44,6 @@ class Client(AIClient):
         content = result.choices[0].message.content
         if verbose:
             logger.debug(
-                        f"Received response from DeepSeek R1:\n \033[33m {content}\033[0m"
-                    ) 
+                f"Received response from DeepSeek R1:\n \033[33m {content}\033[0m"
+            )
         return content
