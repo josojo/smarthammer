@@ -9,3 +9,4 @@ class AIForHypothesesProof(Enum):
     GEMINI = "Gemini-Flash-Thinking"
     DEEPSEEK_R1 = "DeepSeekR1"
     MOCK = "Mock o1"
+    OPENAI_O3_mini = "OpenAI(o3-mini)"

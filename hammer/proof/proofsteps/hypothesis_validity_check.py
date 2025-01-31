@@ -1,6 +1,6 @@
 from hammer.api.logging import LogStreamHandler
 from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState
+from hammer.proof.proof import Hypothesis, ProofSearchState
 import logging
 from dotenv import load_dotenv
 from hammer.proof.proof import ProofSearchState
@@ -54,4 +54,11 @@ def check_hypotheses_validity(
                 )
                 i += 1
         else:
-            i += 1
+            proof_state.proven_hypotheses.append(
+                        Hypothesis(
+                            "p" + str(len(proof_state.proven_hypotheses)),
+                            proof_state.theoretical_hypotheses[i],
+                            "omega", 
+                        )
+                    )
+            proof_state.theoretical_hypotheses.pop(i)

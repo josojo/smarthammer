@@ -66,21 +66,24 @@ class SolverLimits(BaseModel):
         AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.OPENAI_4O,
         AIForHypothesesProof.MOCK,
+        # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
     ]
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
+        AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
-        AIForHypothesesProof.DEEPSEEK_R1,
+        # AIForHypothesesProof.OPENAI_O3_mini,
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
+        AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
-        AIForHypothesesProof.DEEPSEEK_R1,
+        # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
     ]
 
@@ -130,9 +133,9 @@ def validate_inputs(kwargs, logger):
             f"Invalid AI model for hypothesis generation. Allowed models: {SOLVER_LIMITS.allowed_hypothesis_generation_models}"
         )
 
-    if (
-        kwargs.get("ai_for_hyptheses_proof")
-        not in SOLVER_LIMITS.allowed_hypothesis_proof_models
+    if not all(
+        model in SOLVER_LIMITS.allowed_hypothesis_proof_models
+        for model in kwargs.get("ai_for_hypotheses_proof", [])
     ):
         raise ValueError(
             f"Invalid AI model for hypothesis proof. Allowed models: {SOLVER_LIMITS.allowed_hypothesis_proof_models}"
@@ -155,7 +158,8 @@ def return_ai_client(ai_name):
         deepseek_url = os.getenv("DEEPSEEK_URL")
         return DeepSeekClient(base_url=deepseek_url)
     elif ai_name == AIForHypothesesProof.GEMINI:
-        return OpenRouterClient("google/gemini-2.0-flash-thinking-exp:free")
+        # return OpenRouterClient("google/gemini-2.0-flash-thinking-exp:free")
+        return OpenRouterClient("google/gemini-2.0-flash-exp:free")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
         return OpenRouterClient("deepseek/deepseek-r1")
     elif ai_name == AIForHypothesesProof.MOCK:
@@ -164,6 +168,8 @@ def return_ai_client(ai_name):
         return OpenAIClient("o1")
     elif ai_name == AIForHypothesesProof.OPENAI_4O:
         return OpenRouterClient("openai/gpt-4o-2024-11-20")
+    elif ai_name == AIForHypothesesProof.OPENAI_O3_mini:
+        return OpenAIClient("o3-mini")
     else:
         raise ValueError(f"Unknown AI client type: {ai_name}")
 
@@ -194,9 +200,7 @@ def get_solver_configs(kwargs) -> dict:
     config["api_client_for_hypothesis_search"] = return_ai_client(
         kwargs["ai_for_hypotheses_generation"]
     )
-    config["hypothesis_proof_client"] = [
-        return_ai_client(kwargs["ai_for_hyptheses_proof"])
-    ]
+    config["hypothesis_proof_client"] = [return_ai_client(ai_type) for ai_type in kwargs["ai_for_hypotheses_proof"]]
     config["final_proof_client"] = return_ai_client(kwargs["ai_for_final_proof"])
 
     return config

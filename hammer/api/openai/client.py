@@ -31,7 +31,7 @@ class Client(AIClient):
             str: The AI's response
         """
         if verbose:
-            logger.debug(f"Sending message to Open ai: {message}")
+            logger.debug(f"Sending message to {self.model}: {message}")
         result = self.client.chat.completions.create(
             messages=[
                 {
@@ -43,5 +43,5 @@ class Client(AIClient):
         )
         content = result.choices[0].message.content
         if verbose:
-            logger.debug(f"Received response from OpenAI: {content}")
+            logger.debug(f"Received response from {self.model}: {content}")
         return content

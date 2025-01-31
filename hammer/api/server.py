@@ -96,7 +96,7 @@ class TheoremRequest(BaseModel):
     hypotheses: List[str]
     goal: str
     ai_for_hypotheses_generation: AIForHypothesesProof = AIForHypothesesProof.CLAUDE
-    ai_for_hyptheses_proof: AIForHypothesesProof = AIForHypothesesProof.CLAUDE
+    ai_for_hypotheses_proof: List[AIForHypothesesProof] = [AIForHypothesesProof.CLAUDE]
     ai_for_final_proof: AIForHypothesesProof = AIForHypothesesProof.CLAUDE
     max_iteration_hypotheses_proof: int = 1
     max_correction_iteration_hypotheses_proof: int = 1
@@ -144,7 +144,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "max_iteration_final_proof": theorem.max_iteration_final_proof,
             "max_correction_iteration_final_proof": theorem.max_correction_iteration_final_proof,
             "ai_for_hypotheses_generation": theorem.ai_for_hypotheses_generation,
-            "ai_for_hyptheses_proof": theorem.ai_for_hyptheses_proof,
+            "ai_for_hypotheses_proof": theorem.ai_for_hypotheses_proof,
             "ai_for_final_proof": theorem.ai_for_final_proof,
             "verbose": theorem.verbose,
             "task_id": task_id,
