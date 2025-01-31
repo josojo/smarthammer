@@ -62,6 +62,19 @@ brew services start redis
 
 ### Running without docker
 
+Set the env variables like this:
+
+```env
+REPLPATH=$PATH_TO_YOUR_REPL/repl/test/Mathlib 
+REDIS_URL=redis://localhost:6379
+```
+
+and run:
+
+```sh
+source .env
+```
+
 Starting the worker that executes tasks:
 
 ```cmd
