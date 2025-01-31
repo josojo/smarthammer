@@ -200,7 +200,9 @@ def get_solver_configs(kwargs) -> dict:
     config["api_client_for_hypothesis_search"] = return_ai_client(
         kwargs["ai_for_hypotheses_generation"]
     )
-    config["hypothesis_proof_client"] = [return_ai_client(ai_type) for ai_type in kwargs["ai_for_hypotheses_proof"]]
+    config["hypothesis_proof_client"] = [
+        return_ai_client(ai_type) for ai_type in kwargs["ai_for_hypotheses_proof"]
+    ]
     config["final_proof_client"] = return_ai_client(kwargs["ai_for_final_proof"])
 
     return config
