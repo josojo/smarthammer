@@ -19,20 +19,36 @@ if not logger.handlers:
 def proof_based_on_solver(
     client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
 ) -> str:
-    total_prompt = prompt_part_1 + prompt_part_2
-    if client.name == "Claude":
-        total_prompt += prompt_part_3 + examples
-    logger.debug(f"Talking to {client.name} ")
-    response = client.send(total_prompt, verbose)
-    if client.name == "DeepSeek":
-        if "### Final Proof" in response:
-            response = response.split("### Final Proof")[-1]
-        first_triple_backtick = response.find("```")
-        if first_triple_backtick != -1:
-            if response[first_triple_backtick : first_triple_backtick + 7] != "```lean":
-                response = """```lean\n""" + response
-    proof = extract_proof_from_text(response)[0]
-    return proof
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            total_prompt = prompt_part_1 + prompt_part_2
+            if client.name != "DeepSeekProver1.5":
+                total_prompt += prompt_part_3 + examples
+            logger.debug(f"Talking to {client.name} ")
+            response = client.send(total_prompt, verbose)
+            if client.name == "DeepSeek":
+                if "### Final Proof" in response:
+                    response = response.split("### Final Proof")[-1]
+                first_triple_backtick = response.find("```")
+                if first_triple_backtick != -1:
+                    if (
+                        response[first_triple_backtick : first_triple_backtick + 7]
+                        != "```lean"
+                    ):
+                        response = """```lean\n""" + response
+            proofs = extract_proof_from_text(response)
+            if not proofs:
+                raise IndexError("No proof found in response")
+            return proofs[0]
+        except (IndexError, Exception) as e:
+            if attempt == max_retries - 1:
+                logger.error(
+                    f"Failed to extract proof after {max_retries} attempts: {str(e)}"
+                )
+                raise
+            logger.warning(f"Attempt {attempt + 1} failed, retrying...")
+            continue
 
 
 class Hypothesis:
@@ -73,7 +89,7 @@ class ProofSearchState:
     def __str__(self):
         return f"{self.name}: {self.proof}"
 
-    def add_hypotheses(self, claude_client, verbose=False):
+    def add_hypotheses(self, client, verbose=False):
         prompt_part_1 = (
             f"You are a math expert and you want to proof the following lean theorem:\n"
         )
@@ -93,7 +109,7 @@ class ProofSearchState:
            Writing f (n) = Mn + K for arbitrary constants M and K, we and putting into the equations, we get M =2 and K = f (0).
            Lean4 hypotheses:  \n```lean\n lemma lem1 : ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, \n```lean\n lemma lem2 : ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, \n```lean\n lemma lem3 : ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, \n```lean\n lemma lem4 : ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
         """
-        response = claude_client.send(
+        response = client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
         hypotheses = []
@@ -126,6 +142,9 @@ class ProofSearchState:
         if len(hypotheses) == 0:
             raise Exception("No hypotheses extracted")
         self.theoretical_hypotheses.extend(hypotheses)
+
+    def remove_hypotheses(self, hypothesis_number: int):
+        self.theoretical_hypotheses.pop(hypothesis_number)
 
     def generate_proof_candidate_for_hypotheses(
         self, client, number_of_hypotheses, starting_code, verbose=False

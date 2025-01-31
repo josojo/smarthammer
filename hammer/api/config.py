@@ -61,11 +61,11 @@ class SolverLimits(BaseModel):
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.GEMINI,
-        AIForHypothesesProof.CLAUDE,
+        # AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.DEEPSEEK_R1,
-        # AIForHypothesesProof.OPENAI_4O,
-        # AIForHypothesesProof.MOCK,
+        AIForHypothesesProof.OPENAI_4O,
+        AIForHypothesesProof.MOCK,
         # AIForHypothesesProof.OPENAI_O1,
     ]
 

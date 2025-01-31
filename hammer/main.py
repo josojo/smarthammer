@@ -7,6 +7,7 @@ from hammer.proof.proofsteps.hypothesis_proving import (
     prove_theorem_via_hypotheses_search,
 )
 from hammer.proof.proofsteps.hypothesis_search import find_hypotheses
+from hammer.proof.proofsteps.hypothesis_validity_check import check_hypotheses_validity
 from rq import get_current_job
 import logging
 from dotenv import load_dotenv
@@ -65,7 +66,13 @@ def prove_theorem(**kwargs):
             log_handler=log_handler,
         )
 
-        log_handler.set_step("Proving Hypotheses")
+        log_handler.set_step("Checking Hypotheses Validity")
+        check_hypotheses_validity(
+            proof_state,
+            config["lean_client"],
+            verbose=config["verbose"],
+        )
+
         prove_theorem_via_hypotheses_search(
             proof_state,
             config["hypothesis_proof_client"],
