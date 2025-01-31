@@ -1,7 +1,7 @@
+from hammer.proof.proofsteps.hypothesis_proving import iterate_until_valid_proof
 import pytest
 import unittest
 from hammer.api.claude.client import Client
-from hammer.main import iterate_until_valid_proof
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState
 

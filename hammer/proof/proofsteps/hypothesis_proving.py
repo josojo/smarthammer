@@ -64,6 +64,8 @@ def prove_theorem_via_hypotheses_search(
     verbose=False,
     log_handler: LogStreamHandler = None,
 ):
+    if not log_handler:
+        log_handler = LogStreamHandler("")
     # Try to generate proofs for different numbers of hypotheses
     valid_proofs = []
     not_valid_formulations = []

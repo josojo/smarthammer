@@ -8,6 +8,8 @@ from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState
 import logging
 
+from hammer.proof.proofsteps.hypothesis_search import find_hypotheses
+
 
 def setup_test_logging():
     # Configure logging to output to console with DEBUG level
@@ -144,8 +146,14 @@ exact h5
             ]
         )
 
+        find_hypotheses(
+            proof_state,
+            client_for_hypothesis,
+            verbose=False,
+        )
+
         prove_theorem_via_hypotheses_search(
-            proof_state, client_for_hypothesis, [client], self.lean_client, verbose=True
+            proof_state, [client], self.lean_client, verbose=True
         )
         assert len(proof_state.proven_hypotheses) == 5
         for x in proof_state.proven_hypotheses:

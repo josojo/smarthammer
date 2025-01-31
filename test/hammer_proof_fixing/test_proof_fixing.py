@@ -1,8 +1,8 @@
 import unittest
 from hammer.api.mock.mock_client import Client
-from hammer.main import iterate_until_valid_proof
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState
+from hammer.proof.proofsteps.hypothesis_proving import iterate_until_valid_proof
 
 
 class TestIterateUntilValidProof(unittest.TestCase):
