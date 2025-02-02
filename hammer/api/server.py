@@ -345,3 +345,37 @@ async def get_solver_config():
             "allowed_models": "List of allowed AI models for each proof stage",
         },
     }
+
+
+@app.post("/kill-task/{task_id}")
+async def kill_task(task_id: str):
+    """
+    Cancels a running or pending task with the given task_id.
+    Returns success/failure status and message.
+    """
+    # Get the job
+    job = task_queue.fetch_job(task_id)
+    
+    if job is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    if job.is_finished or job.is_failed:
+        return {
+            "success": False,
+            "message": f"Task {task_id} is already {'completed' if job.is_finished else 'failed'}"
+        }
+    
+    # Cancel the job
+    job.cancel()
+    job.delete()
+    
+    # Clean up any associated Redis keys
+    redis_conn.delete(f"task:{task_id}")
+    redis_conn.delete(f"logs:{task_id}")
+    
+    logger.info(f"Successfully cancelled and deleted task: {task_id}")
+    
+    return {
+        "success": True,
+        "message": f"Task {task_id} has been cancelled and deleted"
+    }
