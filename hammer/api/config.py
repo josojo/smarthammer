@@ -9,45 +9,25 @@ from hammer.api.mock.mock_client import Client as MockClient
 from hammer.lean.server import LeanServer
 
 api_output_1 = """
-Natural language proof:
-We want to show that \gcd(21n + 4, 14n + 3) = 1 for any natural number n with 0 < n. We use the fact that \gcd(a, b) = \gcd(a - b, b). Substituting a = 21n + 4 and b = 14n + 3, we get:
+  Natural language proof:
+We want to show that the greatest common divisor of 21n + 4 and 14n + 3 is 1. We can use the Euclidean algorithm.  First, let's try to eliminate the 'n' term. Multiply the second term by 3 and the first term by 2 to get 42n + 8 and 42n+ 9. Subtract the first term from the second and we get 1. Since 1 divides any number we can conclude that the gcd must be 1.
 
-\[
-\gcd(21n + 4,\, 14n + 3)
-= \gcd\bigl((21n + 4) - (14n + 3),\, 14n + 3\bigr)
-= \gcd(7n + 1,\, 14n + 3).
-\]
-
-Next, we apply the same gcd property again but now we subtract twice (7n + 1):
-
-\[
-\gcd(7n + 1,\, 14n + 3)
-= \gcd\bigl(7n + 1,\,(14n + 3) - 2(7n + 1)\bigr)
-= \gcd(7n + 1,\, 1).
-\]
-
-Since the gcd of any number and 1 is always 1, we conclude
-
-
-\gcd(7n + 1,\, 1) = 1.
-
-
-Hence,
-
-
-\gcd(21n + 4,\, 14n + 3) = 1.
-
-           ```lean
-lemma lem1 : ∀ a b : ℕ, Nat.gcd a b = Nat.gcd (a - b) b ```,           
-
+Lean4 hypotheses:
 ```lean
-lemma lem2 : ∀ n : ℕ, Nat.gcd (21 * n + 4) (14 * n + 3) = Nat.gcd (7 * n + 1) (14 * n + 3)```,           
+lemma lem1 : 3 * (14*n + 3) = 42 * n + 9
+```
 ```lean
-lemma lem3 : ∀ n : ℕ, Nat.gcd (7 * n + 1) (14 * n + 3) = Nat.gcd (7 * n + 1) 1 ```, 
+lemma lem2 : 2 * (21*n + 4) = 42 * n + 8
+```
 ```lean
-lemma lem4 : ∀ x : ℕ, Nat.gcd x 1 = 1 ```, 
+lemma lem3 : (42*n + 9) - (42*n + 8) = 1
+```
 ```lean
-lemma lem5 : 14 * n + 3 - 2 * (7 * n + 1) = 1 
+lemma lem5 : Nat.gcd (21*n + 4) (14*n + 3) = Nat.gcd (21*n + 4) (1)
+```
+```lean
+lemma lem6 : Nat.gcd (a : N) 1 = 1
+```
  """
 
 
