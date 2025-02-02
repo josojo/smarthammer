@@ -92,6 +92,7 @@ def prove_theorem_via_hypotheses_search(
                         )
                     )
                     valid_proofs.append(i)
+                    break
             except Exception as e:
                 logger.error(f"Error while proving hypothesis: {e}")
                 not_valid_formulations.append(i)
