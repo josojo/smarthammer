@@ -27,7 +27,7 @@ def proof_based_on_solver(
                 total_prompt += prompt_part_3 + examples
             logger.debug(f"Talking to {client.name} ")
             response = client.send(total_prompt, verbose)
-            if client.name == "DeepSeek":
+            if client.name == "DeepSeekProver1.5":
                 if "### Final Proof" in response:
                     response = response.split("### Final Proof")[-1]
                 first_triple_backtick = response.find("```")

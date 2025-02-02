@@ -20,7 +20,7 @@ class Client(AIClient):
     def __init__(self, base_url=None):
         self.base_url = base_url or "http://194.26.196.173:21919"
         self.endpoint = f"{self.base_url}/generate"
-        self._name = "DeepSeek"
+        self._name = "DeepSeekProver1.5"
         self.timeout = 300  # Increased timeout to 5 minutes
         self.max_retries = 3  # Reduced retries to avoid long waiting times
         self.initial_retry_delay = 2
@@ -31,7 +31,7 @@ class Client(AIClient):
         """Send a message to DeepSeek and return its response."""
         if verbose:
             logger.debug(
-                f"Sending message to DeepSeek:\n \033[33m {message} \n \n \033[0m"
+                f"Sending message to {self.name}:\n \033[33m {message} \n \n \033[0m"
             )
 
         retry_delay = self.initial_retry_delay
@@ -64,7 +64,7 @@ class Client(AIClient):
 
                 if verbose:
                     logger.debug(
-                        f"Received response from DeepSeek:\n \033[33m {output}\033[0m"
+                        f"Received response from {self.name}:\n \033[33m {output}\033[0m"
                     )
                 return output
 
@@ -82,13 +82,13 @@ class Client(AIClient):
             except (RequestException, json.JSONDecodeError) as e:
                 last_exception = e
                 logger.error(
-                    f"DeepSeek API error (attempt {attempt + 1}/{self.max_retries}): {str(last_exception)}"
+                    f"{self.name} API error (attempt {attempt + 1}/{self.max_retries}): {str(last_exception)}"
                 )
-                error_msg = f"DeepSeek API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                error_msg = f"{self.name} API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.warning(error_msg)
 
                 if attempt == self.max_retries - 1:
-                    logger.error(f"All retries failed for DeepSeek API: {str(e)}")
+                    logger.error(f"All retries failed for {self.name} API: {str(e)}")
                     raise
 
             except Exception as e:

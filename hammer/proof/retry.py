@@ -64,7 +64,7 @@ def retry_until_success(
                 f"Error occurred in hypothesis section (line {line_number}), cannot fix"
             )
         previous_ans_code = ""
-        if api_client.name == "DeepSeek":
+        if api_client.name == "DeepSeekProver1.5":
             prompt, previous_ans_code = prompt_with_previous_code_and_cutoff(
                 previous_code, theorem_code, ans_code, error_messages
             )
