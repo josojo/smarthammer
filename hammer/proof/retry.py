@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 def prompt_with_error_message(
     previous_code, theorem_code, ans_code, error_messages, moogle_helper_info=""
 ) -> str:
-    prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block." + moogle_helper_info
+    prompt = (
+        f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+        + moogle_helper_info
+    )
     return prompt
 
 
@@ -75,7 +78,12 @@ def retry_until_success(
             moogle_info = moogle_helper_info
             if moogle_client is not None:
                 moogle_helper_for_error = enrich_error_with_moogle(
-                    error_messages, moogle_client, previous_code, theorem_code, ans_code,verbose
+                    error_messages,
+                    moogle_client,
+                    previous_code,
+                    theorem_code,
+                    ans_code,
+                    verbose,
                 )
                 if moogle_helper_for_error:
                     moogle_info = moogle_helper_for_error

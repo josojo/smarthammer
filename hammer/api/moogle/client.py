@@ -47,13 +47,10 @@ class Client(AIClient):
                     "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
                     "Origin": "https://www.moogle.ai",
                     "Referer": "https://www.moogle.ai/",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                 }
-                
-                payload = [{
-                    "isFind": False,
-                    "contents": message
-                }]
+
+                payload = [{"isFind": False, "contents": message}]
 
                 if verbose:
                     logger.debug(f"Sending request with payload: {payload}")
@@ -67,21 +64,29 @@ class Client(AIClient):
                     headers=headers,
                     json=payload,
                     timeout=self.timeout,
-                    stream=True  # Enable streaming
+                    stream=True,  # Enable streaming
                 )
                 print(f"Response status: {response.status_code}")
                 print(f"Response headers: {dict(response.headers)}")
                 try:
                     response_json = json.loads(response.text)
                     # Extract first entry from data array and get declarationName and declarationCode
-                    if response_json.get('data') and len(response_json['data']) > 0:
-                        first_entries = response_json['data'][1:50]
+                    if response_json.get("data") and len(response_json["data"]) > 0:
+                        first_entries = response_json["data"][1:50]
                         result = []
                         for first_entry in first_entries:
-                            result.append({
-                                'name': first_entry.get('declarationName'),
-                                'code': first_entry.get('declarationCode').split(':= by')[0] if first_entry.get('declarationCode') else ""
-                            })
+                            result.append(
+                                {
+                                    "name": first_entry.get("declarationName"),
+                                    "code": (
+                                        first_entry.get("declarationCode").split(
+                                            ":= by"
+                                        )[0]
+                                        if first_entry.get("declarationCode")
+                                        else ""
+                                    ),
+                                }
+                            )
                         logger.debug(f"Extracted result: {result}")
                         output = json.dumps(result)
                     else:
@@ -93,7 +98,7 @@ class Client(AIClient):
                 if not response.ok:
                     logger.error(f"Response status: {response.status_code}")
                     logger.error(f"Response content: {response.text}")
-                
+
                 response.raise_for_status()
 
                 if verbose:

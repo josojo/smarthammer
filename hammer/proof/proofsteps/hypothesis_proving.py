@@ -80,8 +80,13 @@ def prove_theorem_via_hypotheses_search(
         log_handler.set_step(f"Proofing Hypotheses {i}")
         logger.debug(f"Searching proof for hypothesis {i}")
         for api_client in api_client_for_proofing:
-            moogle_output = getMoogleEnrichmentMsg(proof_state, api_client, moogle_client, i, verbose)
-            moogle_helper_info =  "\n\n Consider using the following lean4 defintions as a helper to find the proof: \n " + moogle_output
+            moogle_output = getMoogleEnrichmentMsg(
+                proof_state, api_client, moogle_client, i, verbose
+            )
+            moogle_helper_info = (
+                "\n\n Consider using the following lean4 defintions as a helper to find the proof: \n "
+                + moogle_output
+            )
             try:
                 proof = iterate_until_valid_proof(
                     proof_state,
