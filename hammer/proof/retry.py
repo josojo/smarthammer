@@ -1,13 +1,14 @@
 import logging
+from hammer.proof.proofsteps.enriching_with_thm_names import enrich_error_with_moogle
 from hammer.proof.utils import extract_proof_from_text
 
 logger = logging.getLogger(__name__)
 
 
 def prompt_with_error_message(
-    previous_code, theorem_code, ans_code, error_messages
+    previous_code, theorem_code, ans_code, error_messages, moogle_helper_info=""
 ) -> str:
-    prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block."
+    prompt = f"The following proof \n```lean4 \n{previous_code}\n {theorem_code}{ans_code}\n ```\n failed with error: \n {error_messages}. \n Please propose a complete lean proof that corrects this error and proves the theorem. Put your proof into a new ```lean ``` block." + moogle_helper_info
     return prompt
 
 
@@ -43,6 +44,8 @@ def retry_until_success(
     ans_code,
     result,
     max_correction_iteration=1,
+    moogle_client=None,
+    moogle_helper_info="",
     verbose=False,
 ):
     # Count lines in hypothesis code
@@ -69,8 +72,15 @@ def retry_until_success(
                 previous_code, theorem_code, ans_code, error_messages
             )
         else:
+            moogle_info = moogle_helper_info
+            if moogle_client is not None:
+                moogle_helper_for_error = enrich_error_with_moogle(
+                    error_messages, moogle_client, previous_code, theorem_code, ans_code,verbose
+                )
+                if moogle_helper_for_error:
+                    moogle_info = moogle_helper_for_error
             prompt = prompt_with_error_message(
-                previous_code, theorem_code, ans_code, error_messages
+                previous_code, theorem_code, ans_code, error_messages, moogle_info
             )
         response = api_client.send(prompt, verbose)
         ans_code = extract_proof_from_text(response)[0]

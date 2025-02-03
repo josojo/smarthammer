@@ -10,3 +10,5 @@ class AIForHypothesesProof(Enum):
     DEEPSEEK_R1 = "DeepSeekR1"
     MOCK = "Mock o1"
     OPENAI_O3_mini = "OpenAI(o3-mini)"
+    OPENAI_O1_mini = "OpenAI(o1-mini)"
+    DEEPSEEK_R1_LAMBDA_DESTILLED = "DeepSeekR1LambdaDestilled"

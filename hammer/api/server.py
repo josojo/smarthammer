@@ -278,7 +278,7 @@ async def get_pending_tasks():
     finished_jobs = finished_registry.get_job_ids()
 
     logger.debug(f"Found running jobs: {running_jobs}")
-    logger.debug(f"Found pending jobs: [job.id for job in pending_jobs]")
+    logger.debug(f"Found pending jobs: {[job.id for job in pending_jobs]}")
     logger.debug(f"Found failed jobs: {failed_jobs}")
     logger.debug(f"Found finished jobs: {finished_jobs}")
 

@@ -2,6 +2,8 @@ from hammer.api.logging import LogStreamHandler
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
 from hammer.api.base_client import AIClient
+from hammer.api.moogle.client import Client as MoogleClient
+from hammer.proof.proofsteps.enriching_with_thm_names import getMoogleEnrichmentMsg
 from hammer.proof.proofsteps.final_proof_assembly import find_final_proof
 from hammer.proof.retry import retry_until_success
 import logging
@@ -20,13 +22,15 @@ def iterate_until_valid_proof(
     lean_client: LeanServer,
     max_iteration=1,
     max_correction_iteration=1,
+    moogle_client: MoogleClient = None,
+    moogle_helper_info="",
     verbose=False,
 ):
     cnt = 0
     starting_code = ""
     while cnt < max_iteration:
         proof_candidate = proof_state.generate_proof_candidate_for_hypotheses(
-            client, hyptotheses_number, starting_code, verbose
+            client, hyptotheses_number, starting_code, moogle_helper_info, verbose
         )
         if proof_candidate:
             code = proof_state.hypothesis_as_code(hyptotheses_number) + proof_candidate
@@ -47,6 +51,8 @@ def iterate_until_valid_proof(
                     proof_candidate,
                     result,
                     max_correction_iteration,
+                    moogle_client,
+                    moogle_helper_info,
                     verbose,
                 )
                 if proof:
@@ -58,6 +64,7 @@ def iterate_until_valid_proof(
 def prove_theorem_via_hypotheses_search(
     proof_state: ProofSearchState,
     api_client_for_proofing: list[AIClient],
+    moogle_client: MoogleClient,
     lean_client: LeanServer,
     max_iteration_hypotheses_proof=1,
     max_correction_iteration_hypotheses_proof=1,
@@ -73,6 +80,8 @@ def prove_theorem_via_hypotheses_search(
         log_handler.set_step(f"Proofing Hypotheses {i}")
         logger.debug(f"Searching proof for hypothesis {i}")
         for api_client in api_client_for_proofing:
+            moogle_output = getMoogleEnrichmentMsg(proof_state, api_client, moogle_client, i, verbose)
+            moogle_helper_info =  "\n\n Consider using the following lean4 defintions as a helper to find the proof: \n " + moogle_output
             try:
                 proof = iterate_until_valid_proof(
                     proof_state,
@@ -81,6 +90,8 @@ def prove_theorem_via_hypotheses_search(
                     lean_client,
                     max_iteration_hypotheses_proof,
                     max_correction_iteration_hypotheses_proof,
+                    moogle_client,
+                    moogle_helper_info,
                     verbose,
                 )
                 if proof:

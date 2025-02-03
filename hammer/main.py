@@ -76,6 +76,7 @@ def prove_theorem(**kwargs):
         prove_theorem_via_hypotheses_search(
             proof_state,
             config["hypothesis_proof_client"],
+            config["moogle_client"],
             config["lean_client"],
             config["max_iteration_hypotheses_proof"],
             config["max_correction_iteration_hypotheses_proof"],

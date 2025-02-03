@@ -17,7 +17,7 @@ class Client(AIClient):
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY"),
         )
-        self._name = "DeepSeek R1"
+        self._name = model
         self.model = model
 
     def send(self, message: str, verbose: bool = False) -> str:
@@ -57,7 +57,7 @@ class Client(AIClient):
                 content = result.choices[0].message.content
                 if verbose:
                     logger.debug(
-                        f"Received response from DeepSeek R1:\n \033[33m {content}\033[0m"
+                        f"Received response from {self.name}:\n \033[33m {content}\033[0m"
                     )
                 return content
 

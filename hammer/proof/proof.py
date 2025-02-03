@@ -17,14 +17,14 @@ if not logger.handlers:
 
 
 def proof_based_on_solver(
-    client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
+    client, prompt_part_1, prompt_part_2, prompt_part_3, examples, moogle_helper_info="", verbose=False
 ) -> str:
     max_retries = 3
     for attempt in range(max_retries):
         try:
             total_prompt = prompt_part_1 + prompt_part_2
             if client.name != "DeepSeekProver1.5":
-                total_prompt += prompt_part_3 + examples
+                total_prompt += prompt_part_3 + examples + moogle_helper_info
             logger.debug(f"Talking to {client.name} ")
             response = client.send(total_prompt, verbose)
             if client.name == "DeepSeekProver1.5":
@@ -147,7 +147,7 @@ class ProofSearchState:
         self.theoretical_hypotheses.pop(hypothesis_number)
 
     def generate_proof_candidate_for_hypotheses(
-        self, client, number_of_hypotheses, starting_code, verbose=False
+        self, client, number_of_hypotheses, starting_code, moogle_helper_info, verbose=False
     ):
         assert number_of_hypotheses < len(self.theoretical_hypotheses)
         prompt_part_1 = f"You are a math expert and you want to complete the following lean theorem proof:\n"
@@ -194,7 +194,7 @@ have np : n ≤ p :=
 ```
 """
         proof = proof_based_on_solver(
-            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
+            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, moogle_helper_info, verbose
         )
         return proof
 
@@ -255,7 +255,7 @@ have np : n ≤ p :=
 ```
 """
         proof = proof_based_on_solver(
-            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, verbose
+            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, "", verbose
         )
         return proof
 

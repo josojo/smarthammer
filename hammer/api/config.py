@@ -7,6 +7,7 @@ from hammer.api.deepseek.client import Client as DeepSeekClient
 from hammer.api.openai.client import Client as OpenAIClient
 from hammer.api.mock.mock_client import Client as MockClient
 from hammer.lean.server import LeanServer
+from hammer.api.moogle.client import Client as MoogleClient
 
 api_output_1 = """
   Natural language proof:
@@ -42,9 +43,10 @@ class SolverLimits(BaseModel):
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.CLAUDE,
-        AIForHypothesesProof.DEEPSEEK_1_5,
+        # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.OPENAI_4O,
+        # AIForHypothesesProof.OPENAI_O3_mini,
         AIForHypothesesProof.MOCK,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
@@ -52,19 +54,23 @@ class SolverLimits(BaseModel):
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.DEEPSEEK_R1,
-        AIForHypothesesProof.DEEPSEEK_1_5,
+        # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
+        AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
         # AIForHypothesesProof.OPENAI_O3_mini,
+        AIForHypothesesProof.OPENAI_O1_mini,
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.DEEPSEEK_R1,
-        AIForHypothesesProof.DEEPSEEK_1_5,
+        # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
+        AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
+        AIForHypothesesProof.OPENAI_O1_mini,
     ]
 
 
@@ -150,6 +156,10 @@ def return_ai_client(ai_name):
         return OpenRouterClient("openai/gpt-4o-2024-11-20")
     elif ai_name == AIForHypothesesProof.OPENAI_O3_mini:
         return OpenAIClient("o3-mini")
+    elif ai_name == AIForHypothesesProof.OPENAI_O1_mini:
+        return OpenAIClient("o1-mini")
+    elif ai_name == AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED:
+        return OpenRouterClient("deepseek/deepseek-r1-distill-llama-70b")
     else:
         raise ValueError(f"Unknown AI client type: {ai_name}")
 
@@ -175,6 +185,7 @@ def get_solver_configs(kwargs) -> dict:
 
     # Initialize lean client
     config["lean_client"] = LeanServer(config["code_env_0"])
+    config["moogle_client"] = MoogleClient()
 
     # Initialize AI clients
     config["api_client_for_hypothesis_search"] = return_ai_client(
