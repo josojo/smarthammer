@@ -71,6 +71,7 @@ class Client(AIClient):
                 try:
                     response_json = json.loads(response.text)
                     # Extract first entry from data array and get declarationName and declarationCode
+                    output = ""
                     if response_json.get("data") and len(response_json["data"]) > 0:
                         first_entries = response_json["data"][1:50]
                         result = []
@@ -90,7 +91,7 @@ class Client(AIClient):
                         logger.debug(f"Extracted result: {result}")
                         output = json.dumps(result)
                     else:
-                        print("No data found in response")
+                        logger.debug("No data found in response")
                 except json.JSONDecodeError as e:
                     print(f"Failed to parse response as JSON: {response.text}")
                     print(f"JSON parse error: {str(e)}")

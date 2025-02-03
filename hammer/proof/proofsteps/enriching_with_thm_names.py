@@ -41,13 +41,11 @@ def getMoogleEnrichmentMsg(
     # Get the hypotheses as code
     hypotheses_code = proof_state.hypothesis_as_code(hypotheses_number)
     msg = f"""
-    you want to proof the following lemma:
+    we want to query an RAG system for lean4 to proof the following lemma
     ```lean
     {hypotheses_code}
     ```
-    in lean4 
-
-    for that you want to first write down an informal proof and then define a short search keywords in a lean4-search engine to find helpful theroems that help you proof the theorem. Put the search keywords as a string into ```search ``` box
+    Please find short search keywords such that the RAG will likely find helpful theroems that help proving the theorem. Put the search keywords as a string into ```search ``` box
     """
     response = ai_client.send(msg, verbose)
     # parse the ```search ``` box from the response
