@@ -153,7 +153,7 @@ exact h5
         )
 
         prove_theorem_via_hypotheses_search(
-            proof_state, [client], self.lean_client, verbose=True
+            proof_state, [client], None, self.lean_client, verbose=True
         )
         assert len(proof_state.proven_hypotheses) == 5
         for x in proof_state.proven_hypotheses:
