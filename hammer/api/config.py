@@ -155,9 +155,9 @@ def return_ai_client(ai_name):
     elif ai_name == AIForHypothesesProof.OPENAI_4O:
         return OpenRouterClient("openai/gpt-4o-2024-11-20")
     elif ai_name == AIForHypothesesProof.OPENAI_O3_mini:
-        return OpenAIClient("o3-mini")
+        return OpenRouterClient("o3-mini")
     elif ai_name == AIForHypothesesProof.OPENAI_O1_mini:
-        return OpenAIClient("o1-mini")
+        return OpenRouterClient("o1-mini")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED:
         return OpenRouterClient("deepseek/deepseek-r1-distill-llama-70b")
     else:
