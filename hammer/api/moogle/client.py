@@ -68,10 +68,10 @@ class Client(AIClient):
                 )
                 print(f"Response status: {response.status_code}")
                 print(f"Response headers: {dict(response.headers)}")
+                output = ""
                 try:
                     response_json = json.loads(response.text)
                     # Extract first entry from data array and get declarationName and declarationCode
-                    output = ""
                     if response_json.get("data") and len(response_json["data"]) > 0:
                         first_entries = response_json["data"][1:50]
                         result = []
