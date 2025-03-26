@@ -61,19 +61,19 @@ class TestUnicodeEscape(unittest.TestCase):
     = -7 n - 3 := by ring
     """
 
-        result = extract_proof_from_text(input_text)
+        result = extract_proof_from_text("5(14n + 3) = -7n - 3", input_text)
         assert len(result) == 1  # Should only find one proof block
         assert result[0] == expected_proof
 
         # Test with no lean blocks
-        assert extract_proof_from_text("No lean blocks here") == []
+        assert extract_proof_from_text("", "No lean blocks here") == []
 
         # Test with empty lean block
-        assert extract_proof_from_text("```lean\n```") == ["\n"]
+        assert extract_proof_from_text("", "```lean\n```") == ["\n"]
 
         # Test with lean block but no theorem
         code_without_theorem = "```lean\nfoo := bar\n```"
-        assert extract_proof_from_text(code_without_theorem) == ["\nfoo := bar\n"]
+        assert extract_proof_from_text("", code_without_theorem) == ["\nfoo := bar\n"]
         code_without_theorem_2 = """
 ```lean
 intros a b g hga hgb
@@ -82,8 +82,19 @@ by_cases h : a >= b
 · simp [Nat.sub_eq_zero_of_le (le_of_not_ge h)
 ```
         """
-        assert extract_proof_from_text(code_without_theorem_2) == [
+        assert extract_proof_from_text("", code_without_theorem_2) == [
             """\nintros a b g hga hgb\nby_cases h : a >= b\n· exact Nat.dvd_sub h hga hgb\n· simp [Nat.sub_eq_zero_of_le (le_of_not_ge h)\n"""
+        ]
+        code_wihtout_theorem_3 = """
+```lean
+have hg_dvd_2a : g ∣ 2 * (21*n + 4) := Nat.dvd_mul_right _ hg_dvd_a
+have h_le : 2 * (21*n + 4) ≤ 3 * (14*n + 3) := by
+-- Rewrite the inequality using the given hypotheses p1 and p0.
+  rw [p1, p0] -- The goal becomes 42*n + 8 ≤ 42*n + 9
+```
+        """
+        assert extract_proof_from_text("", code_wihtout_theorem_3) == [
+            """\nhave hg_dvd_2a : g ∣ 2 * (21*n + 4) := Nat.dvd_mul_right _ hg_dvd_a\nhave h_le : 2 * (21*n + 4) ≤ 3 * (14*n + 3) := by\n  rw [p1, p0] -- The goal becomes 42*n + 8 ≤ 42*n + 9\n"""
         ]
 
 

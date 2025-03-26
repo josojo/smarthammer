@@ -91,7 +91,7 @@ def retry_until_success(
                 previous_code, theorem_code, ans_code, error_messages, moogle_info
             )
         response = api_client.send(prompt, verbose)
-        ans_code = extract_proof_from_text(response)[0]
+        ans_code = extract_proof_from_text(theorem_code, response)[0]
         code = theorem_code + "\n" + previous_ans_code + ans_code
         result = lean_client.run_code(code, 0, verbose)
         if isinstance(result, dict) and (

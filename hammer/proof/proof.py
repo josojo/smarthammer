@@ -18,6 +18,7 @@ if not logger.handlers:
 
 def proof_based_on_solver(
     client,
+    goal_code,
     prompt_part_1,
     prompt_part_2,
     prompt_part_3,
@@ -43,7 +44,7 @@ def proof_based_on_solver(
                         != "```lean"
                     ):
                         response = """```lean\n""" + response
-            proofs = extract_proof_from_text(response)
+            proofs = extract_proof_from_text(goal_code, response)
             if not proofs:
                 raise IndexError("No proof found in response")
             return proofs[0]
@@ -206,6 +207,7 @@ have np : n ≤ p :=
 """
         proof = proof_based_on_solver(
             client,
+            self.theoretical_hypotheses[number_of_hypotheses],
             prompt_part_1,
             prompt_part_2,
             prompt_part_3,
@@ -272,7 +274,14 @@ have np : n ≤ p :=
 ```
 """
         proof = proof_based_on_solver(
-            client, prompt_part_1, prompt_part_2, prompt_part_3, examples, "", verbose
+            client,
+            code,
+            prompt_part_1,
+            prompt_part_2,
+            prompt_part_3,
+            examples,
+            "",
+            verbose,
         )
         return proof
 
