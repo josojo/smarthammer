@@ -59,6 +59,7 @@ app.add_middleware(
         "http://localhost:5173",  # Vite default port
         "http://127.0.0.1:5173",
         "https://owlgebra.vercel.app",  # Add your Vercel domain
+        "*",  # Allow all origins
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
