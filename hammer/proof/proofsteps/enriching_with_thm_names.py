@@ -35,19 +35,25 @@ def getMoogleEnrichmentMsg(
     ai_client: AIClient,
     moogle_client: MoogleClient,
     hypotheses_number,
+    use_keyword_finder=False,
     verbose=False,
 ):
     """Get the message to send to Moogle for enrichment."""
     # Get the hypotheses as code
-    hypotheses_code = proof_state.hypothesis_as_code(hypotheses_number)
-    msg = f"""
-    we want to query an RAG system for lean4 to proof the following lemma
-    ```lean
-    {hypotheses_code}
-    ```
-    Please find short search keywords such that the RAG will likely find helpful theroems that help proving the theorem. Put the search keywords as a string into ```search ``` box
-    """
-    response = ai_client.send(msg, verbose)
+    if use_keyword_finder:
+        hypotheses_code = proof_state.hypothesis_as_code(hypotheses_number)
+        msg = f"""
+        we want to query an RAG system for lean4 to proof the following lemma
+        ```lean
+        {hypotheses_code}
+        ```
+        Please find short search keywords such that the RAG will likely find helpful theroems that help proving the theorem. Put the search keywords as a string into ```search ``` box
+        """
+        response = ai_client.send(msg, verbose)
+    else:
+        response = proof_state.hypothesis_as_goal(hypotheses_number)
+        response = "```search" + response + "```"
+
     # parse the ```search ``` box from the response
     search_keywords = extract_search_blocks(response)
     if search_keywords == []:

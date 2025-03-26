@@ -303,6 +303,28 @@ have np : n ≤ p :=
         code = unicode_escape(code)
         return code
 
+    def hypothesis_as_goal(self, hypothesis_number: int) -> str:
+        """
+        Returns the hypothesis as Lean code for a given hypothesis number.
+
+        Args:
+            proof_state: The proof search state
+            hypothesis_number: The index of the hypothesis to return
+
+        Returns:
+            The hypothesis as Lean code
+        """
+        goal = "\n".join(
+            [
+                line
+                for line in self.theoretical_hypotheses[hypothesis_number].split("\n")
+                if not line.strip().startswith("--")
+            ]
+        )
+        if goal.endswith("\n"):
+            goal = goal.rstrip("\n")
+        return goal
+
     def build_final_proof(self, proof):
         initial_part = f"theorem {self.name} {' '.join(self.original_hypotheses)} : \n{self.goal} := by"
         have_statements = "\n".join(

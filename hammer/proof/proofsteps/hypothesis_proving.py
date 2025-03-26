@@ -83,7 +83,7 @@ def prove_theorem_via_hypotheses_search(
             moogle_helper_info = ""
             if moogle_client:
                 moogle_output = getMoogleEnrichmentMsg(
-                    proof_state, api_client, moogle_client, i, verbose
+                    proof_state, api_client, moogle_client, i, False, verbose
                 )
                 moogle_helper_info = (
                     "\n\n Consider using the following lean4 defintions as a helper to find the proof: \n "
