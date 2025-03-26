@@ -65,25 +65,23 @@ class Client(AIClient):
                     headers=headers,
                     json=payload,
                     timeout=self.timeout,
-                    stream=False,  # Enable streaming
+                    stream=False,
                 )
-                print(f"Response status: {response.status_code}")
-                print(f"Response headers: {dict(response.headers)}")
-
+                # Add detailed response logging
+                logger.info(f"Response status: {response.status_code}")
+                logger.info(f"Response headers: {dict(response.headers)}")
+                logger.info(f"Response content length: {len(response.text)}")
+                logger.info(f"Response content first 100 chars: '{response.text[:100]}'")
+                
                 # Ensure response is valid before processing
                 response.raise_for_status()
 
+                # Check if response is empty before trying to parse JSON
+                if not response.text.strip():
+                    logger.error("Received empty response from Moogle API")
+                    return "[]"  # Return empty array as string when no data
+                
                 try:
-                    # Add debug log to see the raw response
-                    if verbose:
-                        logger.debug(f"Raw response text: '{response.text}'")
-
-                    # Check if response is empty before trying to parse it
-                    if not response.text.strip():
-                        logger.error("Received empty response from Moogle API")
-                        output = "[]"  # Return empty array as string when no data
-                        continue
-
                     response_json = json.loads(response.text)
                     # Extract first entry from data array and get declarationName and declarationCode
                     if response_json.get("data") and len(response_json["data"]) > 0:
@@ -139,6 +137,14 @@ class Client(AIClient):
                 logger.error(
                     f"Moogle API error (attempt {attempt + 1}/{self.max_retries}): {str(last_exception)}"
                 )
+                # Add more detailed error logging
+                if isinstance(e, json.JSONDecodeError):
+                    logger.error(f"JSON decode error position: {e.pos}")
+                    logger.error(f"Response content type: {type(response.text)}")
+                    logger.error(f"Response content length: {len(response.text)}")
+                    logger.error(f"Response first 100 chars: '{response.text[:100]}'")
+                    logger.error(f"Response status code: {response.status_code}")
+                
                 error_msg = f"Moogle API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.warning(error_msg)
 
