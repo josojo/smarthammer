@@ -30,6 +30,8 @@ class Client(AIClient):
 
     def send(self, message, verbose=False):
         """Send a message to DeepSeek and return its response."""
+        # Return empty JSON array as string
+        return "[]"
         if verbose:
             logger.debug(
                 f"Sending message to Moogle:\n \033[33m {message} \n \n \033[0m"
