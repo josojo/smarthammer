@@ -52,7 +52,10 @@ class Client(AIClient):
                     model=self.model,
                 )
                 if result is None or not result.choices:
-                    raise ValueError("Received an invalid response from the API")
+                    raise ValueError(
+                        "Received an invalid response from the API, the response is",
+                        result,
+                    )
 
                 content = result.choices[0].message.content
                 if verbose:

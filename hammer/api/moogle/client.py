@@ -37,6 +37,7 @@ class Client(AIClient):
 
         retry_delay = self.initial_retry_delay
         last_exception = None
+        output = ""  # Initialize output variable
 
         for attempt in range(self.max_retries):
             try:
@@ -68,7 +69,10 @@ class Client(AIClient):
                 )
                 print(f"Response status: {response.status_code}")
                 print(f"Response headers: {dict(response.headers)}")
-                output = ""
+
+                # Ensure response is valid before processing
+                response.raise_for_status()
+
                 try:
                     response_json = json.loads(response.text)
                     # Extract first entry from data array and get declarationName and declarationCode
@@ -92,15 +96,16 @@ class Client(AIClient):
                         output = json.dumps(result)
                     else:
                         logger.debug("No data found in response")
+                        output = "[]"  # Return empty array as string when no data
                 except json.JSONDecodeError as e:
                     print(f"Failed to parse response as JSON: {response.text}")
                     print(f"JSON parse error: {str(e)}")
+                    raise  # Re-raise the exception to be caught by outer try-except
+
                 # Log the full response for debugging
                 if not response.ok:
                     logger.error(f"Response status: {response.status_code}")
                     logger.error(f"Response content: {response.text}")
-
-                response.raise_for_status()
 
                 if verbose:
                     logger.debug(
@@ -151,3 +156,4 @@ class Client(AIClient):
                     logger.debug(f"Retrying in {sleep_time} seconds...")
                 time.sleep(sleep_time)
                 retry_delay *= 2
+        return output

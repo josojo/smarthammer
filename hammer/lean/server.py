@@ -117,7 +117,7 @@ class LeanServer:
             elif index == 2:  # Error message
                 error_msg = self.proc.match.group()
                 logger.error(f"Lean error: {error_msg}")
-                return {"error": error_msg}
+                return {"simulationError": error_msg}
             elif index == 3:  # EOF
                 last_output = self.proc.before
                 logger.error(
