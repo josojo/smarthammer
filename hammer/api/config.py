@@ -42,6 +42,7 @@ class SolverLimits(BaseModel):
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.GEMINI,
+        AIForHypothesesProof.GEMINI_2,
         # AIForHypothesesProof.CLAUDE,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.DEEPSEEK_R1,
@@ -54,6 +55,7 @@ class SolverLimits(BaseModel):
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.DEEPSEEK_R1,
+        AIForHypothesesProof.GEMINI_2,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
@@ -64,6 +66,7 @@ class SolverLimits(BaseModel):
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.DEEPSEEK_R1,
+        AIForHypothesesProof.GEMINI_2,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
@@ -145,7 +148,12 @@ def return_ai_client(ai_name):
         return DeepSeekClient(base_url=deepseek_url)
     elif ai_name == AIForHypothesesProof.GEMINI:
         # return OpenRouterClient("google/gemini-2.0-flash-thinking-exp:free")
-        return OpenRouterClient("google/gemini-2.0-flash-exp:free")
+        # return OpenRouterClient("google/gemini-2.0-flash-exp:free")
+        return OpenRouterClient("google/gemini-2.0-flash-001")
+    elif ai_name == AIForHypothesesProof.GEMINI_2:
+        # return OpenRouterClient("google/gemini-2.0-flash-thinking-exp:free")
+        # return OpenRouterClient("google/gemini-2.0-flash-exp:free")
+        return OpenRouterClient("google/gemini-2.5-pro-exp-03-25:free")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
         return OpenRouterClient("deepseek/deepseek-r1")
     elif ai_name == AIForHypothesesProof.MOCK:

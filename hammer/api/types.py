@@ -7,6 +7,7 @@ class AIForHypothesesProof(Enum):
     OPENAI_4O = "OpenAI(4o)"
     DEEPSEEK_1_5 = "DeepSeekProver1.5"
     GEMINI = "Gemini-Flash-Thinking"
+    GEMINI_2 = "Gemini-Flash-Thinking-2"
     DEEPSEEK_R1 = "DeepSeekR1"
     MOCK = "Mock o1"
     OPENAI_O3_mini = "OpenAI(o3-mini)"
