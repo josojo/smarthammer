@@ -74,6 +74,16 @@ class Client(AIClient):
                 response.raise_for_status()
 
                 try:
+                    # Add debug log to see the raw response
+                    if verbose:
+                        logger.debug(f"Raw response text: '{response.text}'")
+                    
+                    # Check if response is empty before trying to parse it
+                    if not response.text.strip():
+                        logger.error("Received empty response from Moogle API")
+                        output = "[]"  # Return empty array as string when no data
+                        continue
+                        
                     response_json = json.loads(response.text)
                     # Extract first entry from data array and get declarationName and declarationCode
                     if response_json.get("data") and len(response_json["data"]) > 0:
