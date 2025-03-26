@@ -41,35 +41,38 @@ class SolverLimits(BaseModel):
 
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
-        AIForHypothesesProof.GEMINI,
         AIForHypothesesProof.GEMINI_2,
+        # AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.CLAUDE,
         # AIForHypothesesProof.DEEPSEEK_1_5,
-        AIForHypothesesProof.DEEPSEEK_R1,
-        AIForHypothesesProof.OPENAI_4O,
+        # AIForHypothesesProof.DEEPSEEK_R1,
+        # AIForHypothesesProof.OPENAI_4O,
         # AIForHypothesesProof.OPENAI_O3_mini,
-        AIForHypothesesProof.MOCK,
+        # AIForHypothesesProof.MOCK,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
     ]
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
-        AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.GEMINI_2,
+        AIForHypothesesProof.OPENAI_O3_mini,
+        AIForHypothesesProof.DEEPSEEK_V3,
+        AIForHypothesesProof.DEEPSEEK_R1,
         # AIForHypothesesProof.DEEPSEEK_1_5,
-        AIForHypothesesProof.CLAUDE,
+        # AIForHypothesesProof.CLAUDE,
         AIForHypothesesProof.GEMINI,
         AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
         # AIForHypothesesProof.OPENAI_O3_mini,
-        AIForHypothesesProof.OPENAI_O1_mini,
+        # AIForHypothesesProof.OPENAI_O1_mini,
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
-        AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.GEMINI_2,
+        AIForHypothesesProof.DEEPSEEK_R1,
+        AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         AIForHypothesesProof.CLAUDE,
-        AIForHypothesesProof.GEMINI,
+        # AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
         AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
@@ -155,7 +158,9 @@ def return_ai_client(ai_name):
         # return OpenRouterClient("google/gemini-2.0-flash-exp:free")
         return OpenRouterClient("google/gemini-2.5-pro-exp-03-25:free")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
-        return OpenRouterClient("deepseek/deepseek-r1")
+        return OpenRouterClient("deepseek/deepseek-r1-zero:free")
+    elif ai_name == AIForHypothesesProof.DEEPSEEK_V3:
+        return OpenRouterClient("deepseek/deepseek-chat-v3-0324:free")
     elif ai_name == AIForHypothesesProof.MOCK:
         return MockClient([api_output_1])
     elif ai_name == AIForHypothesesProof.OPENAI_O1:
