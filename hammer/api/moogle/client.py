@@ -74,28 +74,38 @@ class Client(AIClient):
                 logger.info(f"Response status: {response.status_code}")
                 logger.info(f"Response headers: {dict(response.headers)}")
                 logger.info(f"Response content length: {len(response.text)}")
-                logger.info(f"Response content first 100 chars: '{response.text[:100]}'")
-                
+                logger.info(
+                    f"Response content first 100 chars: '{response.text[:100]}'"
+                )
+
                 # Ensure response is valid before processing
                 response.raise_for_status()
 
                 # Check if response is compressed with Brotli
-                if response.headers.get('Content-Encoding') == 'br':
+                if response.headers.get("Content-Encoding") == "br":
                     # Check if the content already looks like JSON (not actually compressed)
-                    if response.text.strip().startswith('{'):
-                        logger.info("Content appears to be JSON despite br Content-Encoding header")
+                    if response.text.strip().startswith("{"):
+                        logger.info(
+                            "Content appears to be JSON despite br Content-Encoding header"
+                        )
                         response_text = response.text
                     else:
                         # Try to decompress Brotli content
                         try:
                             decompressed_content = brotli.decompress(response.content)
-                            response_text = decompressed_content.decode('utf-8')
-                            logger.info(f"Successfully decompressed Brotli content, length: {len(response_text)}")
+                            response_text = decompressed_content.decode("utf-8")
+                            logger.info(
+                                f"Successfully decompressed Brotli content, length: {len(response_text)}"
+                            )
                         except Exception as e:
-                            logger.error(f"Failed to decompress Brotli content: {str(e)}")
+                            logger.error(
+                                f"Failed to decompress Brotli content: {str(e)}"
+                            )
                             # If decompression fails but content looks like JSON, try using it directly
-                            if response.text.strip().startswith('{'):
-                                logger.info("Using raw content as JSON despite decompression failure")
+                            if response.text.strip().startswith("{"):
+                                logger.info(
+                                    "Using raw content as JSON despite decompression failure"
+                                )
                                 response_text = response.text
                             else:
                                 return "[]"  # Return empty array as fallback
@@ -106,7 +116,7 @@ class Client(AIClient):
                 if not response_text.strip():
                     logger.error("Received empty response from Moogle API")
                     return "[]"  # Return empty array as string when no data
-                
+
                 try:
                     response_json = json.loads(response_text)
                     # Extract first entry from data array and get declarationName and declarationCode
@@ -170,7 +180,7 @@ class Client(AIClient):
                     logger.error(f"Response content length: {len(response_text)}")
                     logger.error(f"Response first 100 chars: '{response_text[:100]}'")
                     logger.error(f"Response status code: {response.status_code}")
-                
+
                 error_msg = f"Moogle API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
                 logger.warning(error_msg)
 
