@@ -125,3 +125,11 @@ And to get the streamed progress:
 ```cmd
 curl -N http://localhost:8000/logs/{task_id}
 ```
+
+## Running the benchmark
+
+Modify the script hammer/benchmarks solver configuration.
+then run
+```bash
+python hammer/benchmark.py
+```
