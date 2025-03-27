@@ -5,6 +5,7 @@ import time
 import requests
 import logging
 import json
+import brotli  # Add this import for Brotli decompression
 from hammer.api.base_client import AIClient
 from requests.exceptions import Timeout, RequestException
 from urllib3.exceptions import ProtocolError
@@ -31,7 +32,7 @@ class Client(AIClient):
     def send(self, message, verbose=False):
         """Send a message to DeepSeek and return its response."""
         # Return empty JSON array as string
-        return "[]"
+        # return "[]"
         if verbose:
             logger.debug(
                 f"Sending message to Moogle:\n \033[33m {message} \n \n \033[0m"
@@ -78,13 +79,36 @@ class Client(AIClient):
                 # Ensure response is valid before processing
                 response.raise_for_status()
 
+                # Check if response is compressed with Brotli
+                if response.headers.get('Content-Encoding') == 'br':
+                    # Check if the content already looks like JSON (not actually compressed)
+                    if response.text.strip().startswith('{'):
+                        logger.info("Content appears to be JSON despite br Content-Encoding header")
+                        response_text = response.text
+                    else:
+                        # Try to decompress Brotli content
+                        try:
+                            decompressed_content = brotli.decompress(response.content)
+                            response_text = decompressed_content.decode('utf-8')
+                            logger.info(f"Successfully decompressed Brotli content, length: {len(response_text)}")
+                        except Exception as e:
+                            logger.error(f"Failed to decompress Brotli content: {str(e)}")
+                            # If decompression fails but content looks like JSON, try using it directly
+                            if response.text.strip().startswith('{'):
+                                logger.info("Using raw content as JSON despite decompression failure")
+                                response_text = response.text
+                            else:
+                                return "[]"  # Return empty array as fallback
+                else:
+                    response_text = response.text
+
                 # Check if response is empty before trying to parse JSON
-                if not response.text.strip():
+                if not response_text.strip():
                     logger.error("Received empty response from Moogle API")
                     return "[]"  # Return empty array as string when no data
                 
                 try:
-                    response_json = json.loads(response.text)
+                    response_json = json.loads(response_text)
                     # Extract first entry from data array and get declarationName and declarationCode
                     if response_json.get("data") and len(response_json["data"]) > 0:
                         first_entries = response_json["data"][1:50]
@@ -108,14 +132,14 @@ class Client(AIClient):
                         logger.debug("No data found in response")
                         output = "[]"  # Return empty array as string when no data
                 except json.JSONDecodeError as e:
-                    print(f"Failed to parse response as JSON: {response.text}")
+                    print(f"Failed to parse response as JSON: {response_text}")
                     print(f"JSON parse error: {str(e)}")
                     raise  # Re-raise the exception to be caught by outer try-except
 
                 # Log the full response for debugging
                 if not response.ok:
                     logger.error(f"Response status: {response.status_code}")
-                    logger.error(f"Response content: {response.text}")
+                    logger.error(f"Response content: {response_text}")
 
                 if verbose:
                     logger.debug(
@@ -142,9 +166,9 @@ class Client(AIClient):
                 # Add more detailed error logging
                 if isinstance(e, json.JSONDecodeError):
                     logger.error(f"JSON decode error position: {e.pos}")
-                    logger.error(f"Response content type: {type(response.text)}")
-                    logger.error(f"Response content length: {len(response.text)}")
-                    logger.error(f"Response first 100 chars: '{response.text[:100]}'")
+                    logger.error(f"Response content type: {type(response_text)}")
+                    logger.error(f"Response content length: {len(response_text)}")
+                    logger.error(f"Response first 100 chars: '{response_text[:100]}'")
                     logger.error(f"Response status code: {response.status_code}")
                 
                 error_msg = f"Moogle API error (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
