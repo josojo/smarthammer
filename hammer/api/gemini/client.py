@@ -32,7 +32,7 @@ class Client(AIClient):
             )
 
         result = self.client.models.generate_content(
-            model="gemini-1.5-flash", contents=message
+            model="gemini-2.5-pro-exp-03-25", contents=message
         )
         content = result.candidates[0].content.parts[0].text
         if verbose:

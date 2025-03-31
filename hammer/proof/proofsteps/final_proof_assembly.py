@@ -59,7 +59,9 @@ def iterate_until_valid_final_proof(
                 except Exception as e:
                     logger.error(f"Error while proving final proof: {e}")
                     if "cannot fix" in str(e):
-                        logger.warning("Encountered unfixable error, stopping proof attempts")
+                        logger.warning(
+                            "Encountered unfixable error, stopping proof attempts"
+                        )
                         return None
         cnt += 1
     return None

@@ -6,6 +6,7 @@ from hammer.api.openrouter.client import Client as OpenRouterClient
 from hammer.api.deepseek.client import Client as DeepSeekClient
 from hammer.api.openai.client import Client as OpenAIClient
 from hammer.api.mock.mock_client import Client as MockClient
+from hammer.api.gemini.client import Client as GeminiClient
 from hammer.lean.server import LeanServer
 from hammer.api.moogle.client import Client as MoogleClient
 
@@ -162,7 +163,7 @@ def return_ai_client(ai_name):
     elif ai_name == AIForHypothesesProof.GEMINI_2:
         return OpenRouterClient("google/gemini-2.5-pro-exp-03-25:free")
     elif ai_name == AIForHypothesesProof.GEMINI_2_PAID:
-        return OpenRouterClient("google/gemini-2.5-pro-exp-03-25")
+        return GeminiClient()
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
         return OpenRouterClient("deepseek/deepseek-r1-zero:free")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_V3:
