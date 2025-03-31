@@ -41,7 +41,7 @@ class TestUnicodeEscape(unittest.TestCase):
     1. **Introduction of the Theorem**: The theorem states that for any natural number \( n \) greater than 0, the expression \( 3(21n + 4) - 5(14n + 3) \) simplifies to \( -7n - 3 \).
 
     2. **Step-by-Step Proof**:
-    - We start by introducing the variable \( n \).
+    - We start by introducing the variable  n .
     - We then use the `calc` block to perform a series of algebraic manipulations:
         - Expand the multiplication using the distributive property.
         - Simplify the resulting terms.
