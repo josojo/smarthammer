@@ -15,7 +15,7 @@ API_BASE_URL = "http://localhost:8000"  # Change this to your API endpoint
 def fetch_lean_file() -> str:
     """Fetch the miniF2F Lean4 file from GitHub."""
     url = "https://raw.githubusercontent.com/yangky11/miniF2F-lean4/main/MiniF2F/Test.lean"
-    url = "https://github.com/josojo/miniF2F-lean4/blob/easy/MiniF2F/Test.lean"  # only easy ones for now
+    url = "https://raw.githubusercontent.com/josojo/miniF2F-lean4/refs/heads/easy/MiniF2F/Test.lean"  # only easy ones for now
     response = requests.get(url)
     if response.status_code != 200:
         raise Exception(f"Failed to fetch Lean file: {response.status_code}")
