@@ -35,10 +35,15 @@ DEFAULT_CODE_ENV = "import Mathlib"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Initializing default LeanServer cache...")
-    LeanServerCache.initialize(DEFAULT_CODE_ENV)
-    logger.info("Default LeanServer cache initialized successfully")
-
+    logger = logging.getLogger(__name__)
+    try:
+        logger.info("Initializing default LeanServer cache...")
+        LeanServerCache.initialize(DEFAULT_CODE_ENV)
+        logger.info("Default LeanServer cache initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize LeanServer cache: {str(e)}", exc_info=True)
+        # You might want to decide whether to raise the error or continue
+        raise
     yield
 
     # Shutdown (if needed)

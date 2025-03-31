@@ -24,7 +24,14 @@ class LeanServerCache:
     def initialize(cls, code_env: str):
         """Pre-initialize the cache with a given environment"""
         instance = cls.get_instance()
-        instance.get_server(code_env)  # This will create the initial server
+        logger = logging.getLogger(__name__)
+        logger.info(f"Starting LeanServer initialization with environment: {code_env}")
+        try:
+            server = instance.get_server(code_env)  # This will create the initial server
+            logger.info("LeanServer initialization successful")
+        except Exception as e:
+            logger.error(f"LeanServer initialization failed: {str(e)}", exc_info=True)
+            raise
 
     def get_server(self, code_env: str) -> LeanServer:
         with self._lock:
