@@ -1,5 +1,3 @@
-import sys
-import time
 from hammer.api.logging import LogStreamHandler, ContextualLoggerAdapter
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import ProofSearchState, Hypothesis
@@ -10,9 +8,7 @@ from rq import get_current_job
 import logging
 from dotenv import load_dotenv
 from hammer.proof.proof import ProofSearchState
-import psutil
-from hammer.api.config import get_solver_configs, validate_inputs
-
+from hammer.api.moogle.client import Client as MoogleClient
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -21,6 +17,7 @@ logger = logging.getLogger(__name__)
 def iterate_until_valid_final_proof(
     proof_state: ProofSearchState,
     client: AIClient,
+    moogle_client: MoogleClient,
     lean_client: LeanServer,
     max_iteration=1,
     max_correction_iteration=1,
@@ -52,7 +49,9 @@ def iterate_until_valid_final_proof(
                         proof_candidate,
                         result,
                         max_correction_iteration,
-                        verbose,
+                        moogle_client,
+                        moogle_helper_info="",
+                        verbose=verbose,
                     )
                     if proof:
                         return proof
@@ -69,7 +68,8 @@ def iterate_until_valid_final_proof(
 
 def find_final_proof(
     proof_state: ProofSearchState,
-    api_client,
+    api_client: AIClient,
+    moogle_client: MoogleClient,
     lean_client,
     max_iteration_final_proof=1,
     max_iternation_correction_proof=1,
@@ -78,6 +78,7 @@ def find_final_proof(
     proof = iterate_until_valid_final_proof(
         proof_state,
         api_client,
+        moogle_client,
         lean_client,
         max_iteration_final_proof,
         max_iternation_correction_proof,

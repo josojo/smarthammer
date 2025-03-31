@@ -17,14 +17,35 @@ import os
 from rq.registry import FailedJobRegistry
 from urllib.parse import urlparse
 import redis
+from contextlib import asynccontextmanager
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
 from hammer.api.logging import LogStreamHandler, redis_pubsub
 from hammer.api.types import AIForHypothesesProof
 from hammer.api.config import SOLVER_LIMITS
+from hammer.lean.server import LeanServer
+from hammer.lean.cache import LeanServerCache
 
-app = FastAPI()
+
+# Move these to the top level (after imports but before app creation)
+DEFAULT_CODE_ENV = "import Mathlib"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Initializing default LeanServer cache...")
+    LeanServerCache.initialize(DEFAULT_CODE_ENV)
+    logger.info("Default LeanServer cache initialized successfully")
+
+    yield
+
+    # Shutdown (if needed)
+    # Add any cleanup code here
+
+
+app = FastAPI(lifespan=lifespan)
 # Configure Redis connection and queue
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 
@@ -126,6 +147,8 @@ async def create_proof_task(theorem: TheoremRequest):
     timestamp = int(time.time())
     task_id = f"{theorem.name}-{timestamp}-{str(uuid.uuid4())[:10]}"
 
+    code_env = theorem.code_for_env_0 or DEFAULT_CODE_ENV
+
     # Initialize task status in Redis
     initial_status = {"status": "pending", "result": None, "logs": ""}
     redis_conn.set(f"task:{task_id}", json.dumps(initial_status))
@@ -140,6 +163,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "hypotheses": theorem.hypotheses,
             "goal": theorem.goal,
             "code_for_env_0": theorem.code_for_env_0,
+            "code_env": code_env,  # Pass the code_env for the worker cache
             "max_iteration_hypotheses_proof": theorem.max_iteration_hypotheses_proof,
             "max_correction_iteration_hypotheses_proof": theorem.max_correction_iteration_hypotheses_proof,
             "max_iteration_final_proof": theorem.max_iteration_final_proof,

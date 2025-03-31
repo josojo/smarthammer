@@ -161,7 +161,7 @@ exact h5
             print("\n")
             print(x.proof)
         final_proof_with_hypotheses = find_final_proof(
-            proof_state, client, self.lean_client, 1, verbose=True
+            proof_state, client, None, self.lean_client, 1, verbose=True
         )
         result = self.lean_client.run_code(final_proof_with_hypotheses, 0, True)
         if not (

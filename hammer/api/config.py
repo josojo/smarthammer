@@ -7,8 +7,8 @@ from hammer.api.deepseek.client import Client as DeepSeekClient
 from hammer.api.openai.client import Client as OpenAIClient
 from hammer.api.mock.mock_client import Client as MockClient
 from hammer.api.gemini.client import Client as GeminiClient
-from hammer.lean.server import LeanServer
 from hammer.api.moogle.client import Client as MoogleClient
+from hammer.lean.cache import LeanServerCache
 
 api_output_1 = """
   Natural language proof:
@@ -42,38 +42,37 @@ class SolverLimits(BaseModel):
 
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
+        AIForHypothesesProof.MOCK,
+        AIForHypothesesProof.GEMINI_2_PAID,
         AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.CLAUDE_37_THINKING,
-        AIForHypothesesProof.GEMINI_2_PAID,
         AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.CLAUDE,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         # AIForHypothesesProof.DEEPSEEK_R1,
         # AIForHypothesesProof.OPENAI_4O,
         # AIForHypothesesProof.OPENAI_O3_mini,
-        # AIForHypothesesProof.MOCK,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1,
     ]
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
+        AIForHypothesesProof.GEMINI_2_PAID,
         AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.CLAUDE_37_THINKING,
-        AIForHypothesesProof.GEMINI_2_PAID,
         AIForHypothesesProof.OPENAI_O3_mini,
         AIForHypothesesProof.DEEPSEEK_V3,
         AIForHypothesesProof.DEEPSEEK_R1,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         # AIForHypothesesProof.CLAUDE,
-        AIForHypothesesProof.GEMINI,
         AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1_mini,
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
-        AIForHypothesesProof.CLAUDE_37_THINKING,
         AIForHypothesesProof.GEMINI_2_PAID,
+        AIForHypothesesProof.CLAUDE_37_THINKING,
         AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.DEEPSEEK_R1,
         AIForHypothesesProof.OPENAI_O3_mini,
@@ -203,8 +202,10 @@ def get_solver_configs(kwargs) -> dict:
         "verbose": kwargs["verbose"],
     }
 
-    # Initialize lean client
-    config["lean_client"] = LeanServer(config["code_env_0"])
+    # Get LeanServer from cache
+    lean_cache = LeanServerCache.get_instance()
+    config["lean_client"] = lean_cache.get_server(kwargs["code_env"])
+    # Initialize moogle client
     config["moogle_client"] = MoogleClient()
 
     # Initialize AI clients

@@ -88,6 +88,7 @@ def prove_theorem(**kwargs):
         find_final_proof(
             proof_state,
             config["final_proof_client"],  # Use the selected final proof client'],
+            config["moogle_client"],
             config["lean_client"],
             config["max_iteration_final_proof"],
             config["max_correction_iteration_final_proof"],

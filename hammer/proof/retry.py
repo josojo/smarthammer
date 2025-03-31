@@ -1,6 +1,9 @@
 import logging
 from hammer.proof.proofsteps.enriching_with_thm_names import enrich_error_with_moogle
 from hammer.proof.utils import extract_proof_from_text
+from hammer.api.moogle.client import Client as MoogleClient
+from hammer.api.base_client import AIClient
+from hammer.lean.server import LeanServer
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +43,21 @@ def prompt_with_previous_code_and_cutoff(
 
 
 def retry_until_success(
-    api_client,
-    lean_client,
+    api_client: AIClient,
+    lean_client: LeanServer,
     previous_code,
     theorem_code,
     ans_code,
     result,
     max_correction_iteration=1,
-    moogle_client=None,
+    moogle_client: MoogleClient = None,
     moogle_helper_info="",
     verbose=False,
 ):
+    if not hasattr(api_client, "send"):
+        raise ValueError(
+            f"Invalid API client provided: {type(api_client)}. Expected an object with 'send' method."
+        )
     # Count lines in hypothesis code
     hypothesis_lines = theorem_code.count("\n") + 1
     for i in range(0, max_correction_iteration):
