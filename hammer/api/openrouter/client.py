@@ -43,6 +43,10 @@ class Client(AIClient):
         for attempt in range(max_retries):
             try:
                 result = self.client.chat.completions.create(
+                    extra_headers={
+                        "HTTP-Referer": "https://owlgebra.vercel.app/",  # Optional. Site URL for rankings on openrouter.ai.
+                        "X-Title": "OWLgebra",  # Optional. Site title for rankings on openrouter.ai.
+                    },
                     messages=[
                         {
                             "role": "user",
