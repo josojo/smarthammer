@@ -35,18 +35,18 @@ lemma lem6 : Nat.gcd (a : N) 1 = 1
 
 class SolverLimits(BaseModel):
     # Iteration limits
-    max_iteration_hypotheses_proof: int = 10
-    max_correction_iteration_hypotheses_proof: int = 10
-    max_iteration_final_proof: int = 10
-    max_correction_iteration_final_proof: int = 10
+    max_iteration_hypotheses_proof: int = 6
+    max_correction_iteration_hypotheses_proof: int = 6
+    max_iteration_final_proof: int = 6
+    max_correction_iteration_final_proof: int = 6
 
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
-        AIForHypothesesProof.MOCK,
+        # AIForHypothesesProof.MOCK,
         AIForHypothesesProof.GEMINI_2_PAID,
-        AIForHypothesesProof.GEMINI_2,
-        AIForHypothesesProof.CLAUDE_37_THINKING,
-        AIForHypothesesProof.GEMINI,
+        # AIForHypothesesProof.GEMINI_2,
+        # AIForHypothesesProof.CLAUDE_37_THINKING,
+        # AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.CLAUDE,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         # AIForHypothesesProof.DEEPSEEK_R1,
@@ -59,30 +59,30 @@ class SolverLimits(BaseModel):
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.GEMINI_2_PAID,
         AIForHypothesesProof.GEMINI_2,
-        AIForHypothesesProof.CLAUDE_37_THINKING,
-        AIForHypothesesProof.OPENAI_O3_mini,
-        AIForHypothesesProof.DEEPSEEK_V3,
-        AIForHypothesesProof.DEEPSEEK_R1,
+        # AIForHypothesesProof.CLAUDE_37_THINKING,
+        # # AIForHypothesesProof.OPENAI_O3_mini,
+        # AIForHypothesesProof.DEEPSEEK_V3,
+        # AIForHypothesesProof.DEEPSEEK_R1,
         # AIForHypothesesProof.DEEPSEEK_1_5,
         # AIForHypothesesProof.CLAUDE,
-        AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
+        # AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.OPENAI_O1_mini,
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
         AIForHypothesesProof.GEMINI_2_PAID,
-        AIForHypothesesProof.CLAUDE_37_THINKING,
+        # AIForHypothesesProof.CLAUDE_37_THINKING,
         AIForHypothesesProof.GEMINI_2,
-        AIForHypothesesProof.DEEPSEEK_R1,
-        AIForHypothesesProof.OPENAI_O3_mini,
-        # AIForHypothesesProof.DEEPSEEK_1_5,
-        AIForHypothesesProof.CLAUDE,
-        AIForHypothesesProof.GEMINI,
+        # AIForHypothesesProof.DEEPSEEK_R1,
         # AIForHypothesesProof.OPENAI_O3_mini,
-        # AIForHypothesesProof.OPENAI_O1,
-        AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
-        AIForHypothesesProof.OPENAI_O1_mini,
+        # # AIForHypothesesProof.DEEPSEEK_1_5,
+        # AIForHypothesesProof.CLAUDE,
+        # AIForHypothesesProof.GEMINI,
+        # # AIForHypothesesProof.OPENAI_O3_mini,
+        # # AIForHypothesesProof.OPENAI_O1,
+        # AIForHypothesesProof.DEEPSEEK_R1_LAMBDA_DESTILLED,
+        # AIForHypothesesProof.OPENAI_O1_mini,
     ]
 
 
