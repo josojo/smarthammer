@@ -189,8 +189,8 @@ async def create_proof_task(theorem: TheoremRequest):
             "task_id": task_id,
         },
         job_id=task_id,
-        result_ttl=166400,  # Store finished jobs for 2*24 hours
-        job_timeout=7200,  # Increase timeout to 2 hours
+        result_ttl=60 * 60 * 24 * 10,  # Store finished jobs for 10 days
+        job_timeout=1800,
         failure_ttl=24 * 3600,  # Keep failed jobs for 24 hours
         meta={
             "enqueued_at": time.time(),
@@ -232,6 +232,8 @@ async def get_task_status(task_id: str):
                 "proven_hypotheses": proven_hypotheses,
                 "name": result.name,
                 "goal": result.goal,
+                "hypotheses": result.original_hypotheses,
+                "code_env": result.previous_code,
             }
             return TaskStatus(
                 task_id=task_id, status="completed", result=result_dict, logs=logs
