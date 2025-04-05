@@ -194,7 +194,7 @@ class TestParseStringToHypotheses(unittest.TestCase):
     def test_lemma_no_colon(self):
         input_str = "lemma my_lemma_no_colon"
         # Fallback behavior if no colon is found after the name/params
-        expected = MathStatement("", [], "lemma my_lemma_no_colon")
+        expected = MathStatement("my_lemma_no_colon", [], "")
         result = parse_string_to_hypotheses(input_str)
         self.assertEqual(result.name, expected.name)
         self.assertEqual(result.assumptions, expected.assumptions)
@@ -236,6 +236,19 @@ class TestParseStringToHypotheses(unittest.TestCase):
         self.assertEqual(result.name, expected.name)
         self.assertEqual(result.assumptions, expected.assumptions)
         self.assertEqual(result.statement, expected.statement)
+
+    def test_lemma_with_instance_args(self):
+        # Test parsing lemmas with instance arguments like [ ]
+        input_str = "lemma lemma_tsum_mul_tsum_squares (x y : ℕ → ℝ) (hx : Summable (λ i ↦ x i ^ 2)) (hy : Summable (λ j ↦ y j ^ 2)) :\n ∑' i, ∑' j, x i ^ 2 * y j ^ 2 = (∑' i, x i ^ 2) * (∑' j, y j ^ 2)"
+        expected = MathStatement(
+            "lemma_tsum_mul_tsum_squares", ["(x y : ℕ → ℝ)", "(hx : Summable (λ i ↦ x i ^ 2))", "(hy : Summable (λ j ↦ y j ^ 2))"], "∑' i, ∑' j, x i ^ 2 * y j ^ 2 = (∑' i, x i ^ 2) * (∑' j, y j ^ 2)"
+        )
+        result = parse_string_to_hypotheses(input_str)
+        self.assertEqual(result.name, expected.name)
+        self.assertEqual(result.assumptions, expected.assumptions)
+        self.assertEqual(result.statement, expected.statement)
+        
+
 
 
 if __name__ == "__main__":

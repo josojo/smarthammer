@@ -113,13 +113,47 @@ def remove_lean_comments(h: str) -> str:
     return "\n".join(non_comment_lines)
 
 
+def extract_top_level_blocks(text: str) -> list[str]:
+    """
+    Extracts top-level blocks enclosed in (), [], or {} from a string,
+    correctly handling nesting.
+    """
+    blocks = []
+    balance = 0
+    current_block_start = -1
+    expected_closer = None
+    opener = None # Track the specific opener '(', '[', or '{'
+
+    for i, char in enumerate(text):
+        if current_block_start == -1: # Looking for start of a block
+            if char in '([{':
+                current_block_start = i
+                opener = char
+                if char == '(': expected_closer = ')'
+                elif char == '[': expected_closer = ']'
+                else: expected_closer = '}'
+                balance = 1
+        else: # Inside a block
+            if char == opener: # Nested same opener
+                balance += 1
+            elif char == expected_closer: # Corresponding closer
+                balance -= 1
+                if balance == 0: # End of top-level block
+                    blocks.append(text[current_block_start : i + 1])
+                    current_block_start = -1
+                    expected_closer = None
+                    opener = None # Reset opener
+    return [b.strip() for b in blocks]
+
+
 def parse_string_to_hypotheses(h: str) -> MathStatement:
     """
     Parses a string (potentially containing a lemma or theorem)
     to create a MathStatement object representing the core statement.
     Recognizes 'lemma', 'theorem', 'lem', or 'lem<number>' as starting keywords.
-    Finds the main colon separating the head (name, params) from the body (statement).
-    Extracts parenthesized (...), bracketed [...], and curly-braced {...}
+    Finds the main colon separating the head (name, params) from the body (statement),
+    correctly handling nested brackets/braces/parentheses in parameters.
+    Extracts top-level parenthesized (...), bracketed [...], and curly-braced {...}
     blocks found between the name and the main colon as assumptions.
 
     Args:
@@ -127,56 +161,58 @@ def parse_string_to_hypotheses(h: str) -> MathStatement:
 
     Returns:
         MathStatement: An object representing the parsed statement.
-                         Returns an empty statement if parsing fails.
+                         Returns a fallback statement if parsing fails.
     """
-
-    h = remove_lean_comments(h)  # Remove comments from the input string
+    h = remove_lean_comments(h)
     h = h.strip()
 
-    # Regex revised again:
-    # - Match keyword (lemma, theorem, lem, lem<number>) at the start
-    # - Match name (no spaces or brackets/braces/parens)
-    # - Explicitly match zero or more assumption blocks ([...], {...}, (...)) followed by optional space
-    # - Match the main colon separator
-    # - Capture the statement after the main colon
-    # re.DOTALL allows '.' to match newlines for multi-line definitions.
-    match = re.match(
-        r"^\s*(?:lemma|theorem|lem\d+|lem)\s+"  # Keyword and space
-        r"([^\s\(:\}\{\[\]]+)\s*"  # Group 1: Name and optional space
-        r"((?:(?:\[[^\]]*\]|\{[^}]*\}|\([^)]*\))\s*)*)"  # Group 2: Zero or more assumption blocks
-        r"\s*:\s*"  # Colon separator
-        r"(.*)",  # Group 3: Statement
-        h,
-        re.DOTALL,
-    )
-
-    if match:
-        name = match.group(1).strip()
-        # Group 2 captures the entire sequence of assumption blocks as a single string
-        assumptions_part = match.group(2).strip()
-        statement = match.group(3).strip()
-
-        # Use re.findall to extract the individual blocks from assumptions_part
-        # Pattern looks for [...], {...}, or (...)
-        assumptions = re.findall(r"(\[[^\]]*\]|\{[^}]*\}|\([^)]*\))", assumptions_part)
-        # Clean up whitespace for each extracted block
-        assumptions = [a.strip() for a in assumptions]
-
-        # Ensure statement is not empty string which might cause issues later
-        if not statement:
-            # Log the part before the colon if statement is empty
-            colon_index = h.find(":")
-            head_part = h[:colon_index].strip() if colon_index != -1 else h
-            logger.warning(f"Parsed empty statement for head: '{head_part}'")
-
-        return MathStatement(name, assumptions, statement)
-    else:
-        # Fallback if the regex doesn't match the expected structure
+    # Match keyword and name first
+    # Allows 'lem' or 'lem' followed by digits. Name stops at whitespace or brackets/colon.
+    head_match = re.match(r"^\s*(lemma|theorem|lem\d*)\s+([^\s\(:\{\[\}\]]+)", h)
+    if not head_match:
         logger.warning(
-            f"Could not parse standard lemma/theorem structure from: '{h[:100]}...'. Treating as simple statement."
+            f"Could not parse keyword/name from: '{h[:100]}...'. Treating as simple statement."
         )
-        # Use the original string as the statement, with empty name and assumptions
         return MathStatement("", [], h)
+
+    keyword = head_match.group(1)
+    name = head_match.group(2)
+    start_of_params = head_match.end()
+
+    # Scan for the main colon, skipping over balanced pairs '()', '[]', '{}'
+    balance = 0
+    main_colon_idx = -1
+    for i, char in enumerate(h[start_of_params:], start=start_of_params):
+        if char in '([{':
+            balance += 1
+        elif char in ')]}':
+            # Ensure balance doesn't go below 0 due to malformed input
+            if balance > 0:
+                balance -= 1
+        elif char == ':' and balance == 0:
+            main_colon_idx = i
+            break
+
+    if main_colon_idx == -1:
+        logger.warning(
+            f"Could not find main colon for: '{h[:100]}...'. Treating as simple statement."
+        )
+        # Fallback: Use the original string as statement, retain parsed name if available
+        return MathStatement(name, [], h[start_of_params:].strip())
+
+
+    assumptions_part = h[start_of_params:main_colon_idx].strip()
+    statement = h[main_colon_idx + 1:].strip()
+
+    # Now extract top-level assumption blocks from assumptions_part using the helper
+    assumptions = extract_top_level_blocks(assumptions_part)
+
+    # Ensure statement is not empty string which might cause issues later
+    if not statement:
+        head_part = h[:main_colon_idx].strip()
+        logger.warning(f"Parsed empty statement for head: '{head_part}'")
+
+    return MathStatement(name, assumptions, statement)
 
 
 class ProofSearchState:
