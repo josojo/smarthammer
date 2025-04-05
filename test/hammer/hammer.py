@@ -3,7 +3,7 @@ from hammer.main import prove_theorem_via_hypotheses_search
 from hammer.api.mock.mock_client import Client
 from hammer.lean.server import LeanServer
 
-from hammer.proof.proof import ProofSearchState, Hypothesis
+from hammer.proof.proof import ProofSearchState
 
 
 class TestHammer(unittest.TestCase):

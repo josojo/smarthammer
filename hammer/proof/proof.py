@@ -4,6 +4,7 @@ from .utils import (
     unicode_escape,
 )
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -58,31 +59,130 @@ def proof_based_on_solver(
             continue
 
 
-class Hypothesis:
-    """Represents a mathematical hypothesis with its name, statement, and proof."""
+class MathStatement:
+    """Represents a mathematical statement with its name, statement, and proof."""
 
-    def __init__(self, name, hypothesis, proof):
+    def __init__(self, name, assumptions, statement, proof=None):
         self.name = name
-        self.hypothesis = hypothesis
-        self.proof = proof
-
-    def add_proof(self, proof):
-        """Add or update the proof for this hypothesis."""
+        # Ensure assumptions is always a list of strings
+        self.assumptions = [str(a).strip() for a in assumptions] if assumptions else []
+        self.statement = str(statement).strip() if statement else ""
         self.proof = proof
 
     def __str__(self):
-        """Convert hypothesis to string format."""
-        return f"({self.name} : {self.hypothesis})"
+        """Convert statement to string format."""
+        # Ensure assumptions are joined correctly even if empty
+        assumptions_str = (" " + " ".join(self.assumptions)) if self.assumptions else ""
+        # Handle potential empty name in fallback case
+        name_str = self.name if self.name else ""
+        colon_str = ": " if self.statement else ""  # Add colon only if statement exists
+        # Added check to prevent adding space after name if no assumptions exist
+        if assumptions_str:
+            return f"({name_str}{assumptions_str}{colon_str}{self.statement})"
+        else:
+            return f"({name_str}{colon_str}{self.statement})"
 
     def __repr__(self):
         """Representation for debugging."""
-        return self.__str__()
+        return f"MathStatement(name='{self.name}', assumptions={self.assumptions}, statement='{self.statement}')"
+
+    def __eq__(self, other):
+        """Check equality between two MathStatement objects."""
+        if not isinstance(other, MathStatement):
+            return NotImplemented
+        return (
+            self.name == other.name
+            and self.assumptions == other.assumptions
+            and self.statement == other.statement
+        )
+
+
+def remove_lean_comments(h: str) -> str:
+    """
+    Removes lines that start with -- (Lean comments) from the input string.
+
+    Args:
+        h: Input string potentially containing Lean comments
+
+    Returns:
+        String with Lean comment lines removed
+    """
+    # Split into lines and filter out comment lines
+    lines = h.split("\n")
+    non_comment_lines = [line for line in lines if not line.strip().startswith("--")]
+    return "\n".join(non_comment_lines)
+
+
+def parse_string_to_hypotheses(h: str) -> MathStatement:
+    """
+    Parses a string (potentially containing a lemma or theorem)
+    to create a MathStatement object representing the core statement.
+    Recognizes 'lemma', 'theorem', 'lem', or 'lem<number>' as starting keywords.
+    Finds the main colon separating the head (name, params) from the body (statement).
+    Extracts parenthesized (...), bracketed [...], and curly-braced {...}
+    blocks found between the name and the main colon as assumptions.
+
+    Args:
+        h: The input string, expected to contain a lemma or theorem definition.
+
+    Returns:
+        MathStatement: An object representing the parsed statement.
+                         Returns an empty statement if parsing fails.
+    """
+
+    h = remove_lean_comments(h)  # Remove comments from the input string
+    h = h.strip()
+
+    # Regex revised again:
+    # - Match keyword (lemma, theorem, lem, lem<number>) at the start
+    # - Match name (no spaces or brackets/braces/parens)
+    # - Explicitly match zero or more assumption blocks ([...], {...}, (...)) followed by optional space
+    # - Match the main colon separator
+    # - Capture the statement after the main colon
+    # re.DOTALL allows '.' to match newlines for multi-line definitions.
+    match = re.match(
+        r"^\s*(?:lemma|theorem|lem\d+|lem)\s+"  # Keyword and space
+        r"([^\s\(:\}\{\[\]]+)\s*"  # Group 1: Name and optional space
+        r"((?:(?:\[[^\]]*\]|\{[^}]*\}|\([^)]*\))\s*)*)"  # Group 2: Zero or more assumption blocks
+        r"\s*:\s*"  # Colon separator
+        r"(.*)",  # Group 3: Statement
+        h,
+        re.DOTALL,
+    )
+
+    if match:
+        name = match.group(1).strip()
+        # Group 2 captures the entire sequence of assumption blocks as a single string
+        assumptions_part = match.group(2).strip()
+        statement = match.group(3).strip()
+
+        # Use re.findall to extract the individual blocks from assumptions_part
+        # Pattern looks for [...], {...}, or (...)
+        assumptions = re.findall(r"(\[[^\]]*\]|\{[^}]*\}|\([^)]*\))", assumptions_part)
+        # Clean up whitespace for each extracted block
+        assumptions = [a.strip() for a in assumptions]
+
+        # Ensure statement is not empty string which might cause issues later
+        if not statement:
+            # Log the part before the colon if statement is empty
+            colon_index = h.find(":")
+            head_part = h[:colon_index].strip() if colon_index != -1 else h
+            logger.warning(f"Parsed empty statement for head: '{head_part}'")
+
+        return MathStatement(name, assumptions, statement)
+    else:
+        # Fallback if the regex doesn't match the expected structure
+        logger.warning(
+            f"Could not parse standard lemma/theorem structure from: '{h[:100]}...'. Treating as simple statement."
+        )
+        # Use the original string as the statement, with empty name and assumptions
+        return MathStatement("", [], h)
 
 
 class ProofSearchState:
     def __init__(self, name, hypotheses, previous_code, goal, nl_proof=None):
         self.name = name
-        self.original_hypotheses = hypotheses
+        self.statement = MathStatement(name, hypotheses, goal)
         self.previous_code = previous_code
         self.goal = goal
         self.theoretical_hypotheses = []
@@ -100,7 +200,7 @@ class ProofSearchState:
         prompt_part_1 = (
             f"You are a math expert and you want to proof the following lean theorem:\n"
         )
-        prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.original_hypotheses) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
+        prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.statement.assumptions) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
         prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name as in the following examples."
         examples = f"""Examples:
         Example 1:
@@ -120,34 +220,28 @@ class ProofSearchState:
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
         hypotheses = []
-        for h in extract_lean_blocks(response):
-            if (
-                h.startswith("\n lemma ")
-                or h.startswith("\nlemma ")
-                or h.startswith("lemma ")
-            ):
-                # Find the first colon that's not inside parentheses/brackets
-                paren_count = 0
-                colon_index = -1
-                for i, char in enumerate(h):
-                    if char in "([{":
-                        paren_count += 1
-                    elif char in ")]}":
-                        paren_count -= 1
-                    elif char == ":" and paren_count == 0:
-                        colon_index = i
-                        break
+        lean_blocks = extract_lean_blocks(response)  # Extract all lean blocks first
+        if not lean_blocks:
+            logger.warning(f"No Lean blocks extracted from response: {response}")
+            # Maintain original behavior of raising exception if no blocks found
+            raise Exception("No hypotheses extracted (no Lean blocks found)")
 
-                if colon_index != -1:
-                    hypothesis = h[colon_index + 1 :].strip()
-                else:
-                    hypothesis = h
-                hypotheses.append(hypothesis)
+        for block_content in lean_blocks:
+            # Parse each extracted block content
+            statement = parse_string_to_hypotheses(block_content)
+            # Only add if parsing was successful (i.e., name or statement is not empty)
+            # The check for statement ensures the fallback case doesn't add empty statements
+            if statement.name or statement.statement:
+                hypotheses.append(statement)
             else:
-                hypotheses.append(h)
+                # This case should ideally not happen with the current fallback logic, but good for safety
+                logger.warning(
+                    f"Failed to parse a valid statement or name from block: '{block_content[:100]}...'"
+                )
 
         if len(hypotheses) == 0:
-            raise Exception("No hypotheses extracted")
+            # This check is now more robust, failing only if *no valid* statements were parsed from the blocks found
+            raise Exception("No valid hypotheses extracted from the found Lean blocks")
         self.theoretical_hypotheses.extend(hypotheses)
 
     def remove_hypotheses(self, hypothesis_number: int):
@@ -218,9 +312,8 @@ have np : n ≤ p :=
         return proof
 
     def get_theorem_code(self):
-        # code = f"theorem {self.name} {' '.join(self.original_hypotheses)} \n {' \n'.join(map(str, self.proven_hypotheses))} : \n {self.goal} := by\n"
         # Start with the theorem name and original hypotheses
-        code = f"theorem {self.name} {' '.join(self.original_hypotheses)}"
+        code = f"theorem {self.name} {' '.join(self.statement.assumptions)}"
 
         # Add each proven hypothesis on a new line
         if self.proven_hypotheses:
@@ -302,13 +395,15 @@ have np : n ≤ p :=
         goal = "\n".join(
             [
                 line
-                for line in self.theoretical_hypotheses[hypothesis_number].split("\n")
+                for line in self.theoretical_hypotheses[
+                    hypothesis_number
+                ].statement.split("\n")
                 if not line.strip().startswith("--")
             ]
         )
         if goal.endswith("\n"):
             goal = goal.rstrip("\n")
-        code = f"theorem {self.name} {' '.join(self.original_hypotheses)+ ' '.join(map(str, self.proven_hypotheses))} : \n {goal} := by"
+        code = f"theorem {self.theoretical_hypotheses[hypothesis_number].name} {' '.join(self.statement.assumptions)+ ' '.join(map(str, self.proven_hypotheses))+ ' '.join(map(str, self.theoretical_hypotheses[hypothesis_number].assumptions))} : \n {goal} := by"
         code = unicode_escape(code)
         return code
 
@@ -326,7 +421,9 @@ have np : n ≤ p :=
         goal = "\n".join(
             [
                 line
-                for line in self.theoretical_hypotheses[hypothesis_number].split("\n")
+                for line in self.theoretical_hypotheses[
+                    hypothesis_number
+                ].statement.split("\n")
                 if not line.strip().startswith("--")
             ]
         )
@@ -335,10 +432,10 @@ have np : n ≤ p :=
         return goal
 
     def build_final_proof(self, proof):
-        initial_part = f"theorem {self.name} {' '.join(self.original_hypotheses)} : \n{self.goal} := by"
+        initial_part = f"theorem {self.name} {' '.join(self.statement.assumptions)} : \n{self.goal} := by"
         have_statements = "\n".join(
             [
-                f"have {h.name} : {h.hypothesis} := by\n"
+                f"have {h.name} : {h.statement} := by\n"
                 + "\n".join("  " + line for line in h.proof.split("\n"))
                 for h in self.proven_hypotheses
             ]

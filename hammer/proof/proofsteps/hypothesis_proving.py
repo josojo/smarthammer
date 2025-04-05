@@ -1,6 +1,6 @@
 from hammer.api.logging import LogStreamHandler
 from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState, Hypothesis
+from hammer.proof.proof import MathStatement, ProofSearchState
 from hammer.api.base_client import AIClient
 from hammer.api.moogle.client import Client as MoogleClient
 from hammer.proof.proofsteps.enriching_with_thm_names import getMoogleEnrichmentMsg
@@ -103,9 +103,10 @@ def prove_theorem_via_hypotheses_search(
                 )
                 if proof:
                     proof_state.proven_hypotheses.append(
-                        Hypothesis(
+                        MathStatement(
                             "p" + str(len(proof_state.proven_hypotheses)),
-                            proof_state.theoretical_hypotheses[i],
+                            proof_state.theoretical_hypotheses[i].assumptions,
+                            proof_state.theoretical_hypotheses[i].statement,
                             proof,
                         )
                     )

@@ -1,5 +1,5 @@
 import pytest
-from hammer.proof.proof import ProofSearchState
+from hammer.proof.proof import MathStatement, ProofSearchState
 
 
 class MockClaudeClient:
@@ -35,8 +35,8 @@ def test_hypothesis_extraction():
     state = ProofSearchState(
         name="test_theorem",
         hypotheses=["(n : ℕ)"],
-        previous_code="",
         goal="Nat.gcd (21*n + 4) (14*n + 3) = 1",
+        previous_code="",
     )
 
     # Add hypotheses using mock client
@@ -44,10 +44,10 @@ def test_hypothesis_extraction():
 
     # Expected hypotheses after extraction
     expected_hypotheses = [
-        "∀ (a b c : ℤ), a ∣ b → a ∣ c → a ∣ (b - c)",
-        "Nat.gcd (21*n + 4) (14*n + 3) ∣ (-2*n - 1)",
-        "Nat.gcd (21*n + 4) (14*n + 3) ∣ (35*n + 6)",
-        "∀ (d : ℕ), d > 0 → d ∣ 1 → d = 1",
+        MathStatement("lem1", [], "∀ (a b c : ℤ), a ∣ b → a ∣ c → a ∣ (b - c)", None),
+        MathStatement("lem2", [], "Nat.gcd (21*n + 4) (14*n + 3) ∣ (-2*n - 1)", None),
+        MathStatement("lem3", [], "Nat.gcd (21*n + 4) (14*n + 3) ∣ (35*n + 6)", None),
+        MathStatement("lem4", [], "∀ (d : ℕ), d > 0 → d ∣ 1 → d = 1", None),
     ]
 
     # Verify that we got the expected number of hypotheses
@@ -58,5 +58,8 @@ def test_hypothesis_extraction():
     # Verify each hypothesis matches exactly
     for actual, expected in zip(state.theoretical_hypotheses, expected_hypotheses):
         assert (
-            actual.strip() == expected.strip()
+            actual.statement.strip() == expected.statement.strip()
         ), f"Hypothesis mismatch:\nExpected: {expected}\nGot: {actual}"
+        assert (
+            actual.name.strip() == expected.name.strip()
+        ), f"Hypothesis name mismatch:\nExpected: {expected}\nGot: {actual}"

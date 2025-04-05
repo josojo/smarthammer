@@ -232,7 +232,7 @@ async def get_task_status(task_id: str):
                 "proven_hypotheses": proven_hypotheses,
                 "name": result.name,
                 "goal": result.goal,
-                "hypotheses": result.original_hypotheses,
+                "hypotheses": result.statement.assumptions,
                 "code_env": result.previous_code,
             }
             return TaskStatus(

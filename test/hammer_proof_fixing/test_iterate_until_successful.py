@@ -1,7 +1,7 @@
 import json
 import unittest
 from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState
+from hammer.proof.proof import MathStatement, ProofSearchState
 from hammer.api.mock.mock_client import Client
 from hammer.proof.retry import retry_until_success
 
@@ -20,7 +20,7 @@ class TestIterateUntilValidProof(unittest.TestCase):
         # Create a proof state
         proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.theoretical_hypotheses = [
-            "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)",
+            MathStatement("lem1", [], "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None)
         ]
 
         proof_candidate = """

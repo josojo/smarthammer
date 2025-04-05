@@ -1,7 +1,7 @@
 import unittest
 from hammer.api.mock.mock_client import Client
 from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState
+from hammer.proof.proof import MathStatement, ProofSearchState
 from hammer.proof.proofsteps.hypothesis_proving import iterate_until_valid_proof
 
 
@@ -37,7 +37,7 @@ by_cases h : a >= b
 
         proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.theoretical_hypotheses = [
-            "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)",
+            MathStatement("ab", [], "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None)
         ]
         # Create mock client
         client = Client([api_output_1, api_output_2])

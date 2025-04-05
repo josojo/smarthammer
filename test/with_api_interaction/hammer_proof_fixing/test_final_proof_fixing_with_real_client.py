@@ -3,7 +3,7 @@ from hammer.proof.proofsteps.final_proof_assembly import iterate_until_valid_fin
 import pytest
 from hammer.api.claude.client import Client
 from hammer.lean.server import LeanServer
-from hammer.proof.proof import Hypothesis, ProofSearchState
+from hammer.proof.proof import MathStatement, ProofSearchState
 
 
 class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
@@ -21,11 +21,13 @@ class TestIterateUntilValidProofWithRealClient(unittest.TestCase):
         previous_lean_code = "import Mathlib\n"
         proof_state = ProofSearchState(name, hypotheses, previous_lean_code, goal)
         proof_state.proven_hypotheses = [
-            Hypothesis("h0", "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None),
-            Hypothesis("h1", "(21*n + 4) - (14*n + 3) = 7*n + 1", None),
-            Hypothesis("h2", "3*(14*n + 3) - 2*(21*n + 4) = 1", None),
-            Hypothesis("h3", "∀ g : ℕ, g ∣ (21*n + 4) → g ∣ (14*n + 3) → g ∣ 1", None),
-            Hypothesis("h4", "∀ g : ℕ, g ∣ 1 → g = 1", None),
+            MathStatement("h0", "∀ a b g : ℕ, g ∣ a → g ∣ b → g ∣ (a - b)", None),
+            MathStatement("h1", "(21*n + 4) - (14*n + 3) = 7*n + 1", None),
+            MathStatement("h2", "3*(14*n + 3) - 2*(21*n + 4) = 1", None),
+            MathStatement(
+                "h3", "∀ g : ℕ, g ∣ (21*n + 4) → g ∣ (14*n + 3) → g ∣ 1", None
+            ),
+            MathStatement("h4", "∀ g : ℕ, g ∣ 1 → g = 1", None),
         ]
         # Create mock client
         client = Client()

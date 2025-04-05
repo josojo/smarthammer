@@ -50,12 +50,12 @@ class TestHammer(unittest.TestCase):
         Let's break this down into critical Lean4 hypotheses:
 
         ```lean
-        ∀ a b g: ℕ , g ∣ a → g ∣ b → g ∣ (a - b) 
+        lem1 lemma1 : ∀ a b g: ℕ , g ∣ a → g ∣ b → g ∣ (a - b) 
         ```
 
         ```lean
         -- first linear combination equals 7n + 1
-        (21*n + 4) - (14*n + 3) = 7*n + 1
+        lem1 lemma2 : (21*n + 4) - (14*n + 3) = 7*n + 1
         ```
 
         ```lean\nlemma lem2 : 3*(14*n + 3) - 2*(21*n + 4) = 1
@@ -63,12 +63,12 @@ class TestHammer(unittest.TestCase):
 
         ```lean
         -- if g divides both original numbers, it divides 1
-        ∀ g : ℕ, g ∣ (21*n + 4) → g ∣ (14*n + 3) → g ∣ 1
+lem lem3 : ∀ g : ℕ, g ∣ (21*n + 4) → g ∣ (14*n + 3) → g ∣ 1
         ```
 
         ```lean
         -- only 1 divides 1 in natural numbers
-        ∀ g : ℕ, g ∣ 1 → g = 1
+lem lemmy : ∀ g : ℕ, g ∣ 1 → g = 1
         ```
 
         These hypotheses capture the key steps needed to prove that the GCD must be 1."""

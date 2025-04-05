@@ -1,6 +1,5 @@
-from hammer.api.logging import LogStreamHandler, ContextualLoggerAdapter
 from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState, Hypothesis
+from hammer.proof.proof import ProofSearchState
 
 from hammer.api.base_client import AIClient
 from hammer.proof.retry import retry_until_success

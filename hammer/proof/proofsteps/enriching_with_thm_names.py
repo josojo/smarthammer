@@ -1,6 +1,4 @@
-from hammer.api.logging import LogStreamHandler
-from hammer.lean.server import LeanServer
-from hammer.proof.proof import ProofSearchState, Hypothesis
+from hammer.proof.proof import ProofSearchState
 from hammer.api.base_client import AIClient
 import logging
 from dotenv import load_dotenv
