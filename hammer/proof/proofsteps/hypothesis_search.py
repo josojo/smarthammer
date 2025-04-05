@@ -2,7 +2,7 @@ from hammer.api.logging import LogStreamHandler
 from hammer.proof.proof import ProofSearchState
 from hammer.api.base_client import AIClient
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
 
 

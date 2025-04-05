@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from redis import Redis, ConnectionPool
-from rq import Queue
+from redis import Redis, ConnectionPool  # type: ignore
+from rq import Queue  # type: ignore
 import uuid
 import logging
 from typing import List, Optional, Dict
@@ -10,18 +10,17 @@ import json
 import asyncio
 import time
 import logging
-from rq.job import Job
+from rq.job import Job  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
-from enum import Enum
 import os
-from rq.registry import FailedJobRegistry
+from rq.registry import FailedJobRegistry  # type: ignore
 from urllib.parse import urlparse
-import redis
+import redis  # type: ignore
 from contextlib import asynccontextmanager
 
 from hammer.main import prove_theorem
 from hammer.proof.proof import ProofSearchState
-from hammer.api.logging import LogStreamHandler, redis_pubsub
+from hammer.api.logging import redis_pubsub
 from hammer.api.types import AIForHypothesesProof
 from hammer.api.config import SOLVER_LIMITS
 from hammer.lean.server import LeanServer

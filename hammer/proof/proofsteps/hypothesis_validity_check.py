@@ -1,8 +1,7 @@
-from hammer.api.logging import LogStreamHandler
 from hammer.lean.server import LeanServer
 from hammer.proof.proof import MathStatement, ProofSearchState
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
 
 

@@ -7,7 +7,7 @@ from hammer.proof.proofsteps.enriching_with_thm_names import getMoogleEnrichment
 from hammer.proof.proofsteps.final_proof_assembly import find_final_proof
 from hammer.proof.retry import retry_until_success
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
 
 

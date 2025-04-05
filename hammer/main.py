@@ -8,9 +8,9 @@ from hammer.proof.proofsteps.hypothesis_proving import (
 )
 from hammer.proof.proofsteps.hypothesis_search import find_hypotheses
 from hammer.proof.proofsteps.hypothesis_validity_check import check_hypotheses_validity
-from rq import get_current_job
+from rq import get_current_job  # type: ignore
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
 import psutil
 from hammer.api.config import get_solver_configs, validate_inputs

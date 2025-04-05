@@ -3,9 +3,9 @@ from hammer.proof.proof import ProofSearchState
 
 from hammer.api.base_client import AIClient
 from hammer.proof.retry import retry_until_success
-from rq import get_current_job
+from rq import get_current_job  # type: ignore
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
 from hammer.api.moogle.client import Client as MoogleClient
 
