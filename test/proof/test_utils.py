@@ -241,14 +241,18 @@ class TestParseStringToHypotheses(unittest.TestCase):
         # Test parsing lemmas with instance arguments like [ ]
         input_str = "lemma lemma_tsum_mul_tsum_squares (x y : ℕ → ℝ) (hx : Summable (λ i ↦ x i ^ 2)) (hy : Summable (λ j ↦ y j ^ 2)) :\n ∑' i, ∑' j, x i ^ 2 * y j ^ 2 = (∑' i, x i ^ 2) * (∑' j, y j ^ 2)"
         expected = MathStatement(
-            "lemma_tsum_mul_tsum_squares", ["(x y : ℕ → ℝ)", "(hx : Summable (λ i ↦ x i ^ 2))", "(hy : Summable (λ j ↦ y j ^ 2))"], "∑' i, ∑' j, x i ^ 2 * y j ^ 2 = (∑' i, x i ^ 2) * (∑' j, y j ^ 2)"
+            "lemma_tsum_mul_tsum_squares",
+            [
+                "(x y : ℕ → ℝ)",
+                "(hx : Summable (λ i ↦ x i ^ 2))",
+                "(hy : Summable (λ j ↦ y j ^ 2))",
+            ],
+            "∑' i, ∑' j, x i ^ 2 * y j ^ 2 = (∑' i, x i ^ 2) * (∑' j, y j ^ 2)",
         )
         result = parse_string_to_hypotheses(input_str)
         self.assertEqual(result.name, expected.name)
         self.assertEqual(result.assumptions, expected.assumptions)
         self.assertEqual(result.statement, expected.statement)
-        
-
 
 
 if __name__ == "__main__":

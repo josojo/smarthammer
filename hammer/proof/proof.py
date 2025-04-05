@@ -122,27 +122,30 @@ def extract_top_level_blocks(text: str) -> list[str]:
     balance = 0
     current_block_start = -1
     expected_closer = None
-    opener = None # Track the specific opener '(', '[', or '{'
+    opener = None  # Track the specific opener '(', '[', or '{'
 
     for i, char in enumerate(text):
-        if current_block_start == -1: # Looking for start of a block
-            if char in '([{':
+        if current_block_start == -1:  # Looking for start of a block
+            if char in "([{":
                 current_block_start = i
                 opener = char
-                if char == '(': expected_closer = ')'
-                elif char == '[': expected_closer = ']'
-                else: expected_closer = '}'
+                if char == "(":
+                    expected_closer = ")"
+                elif char == "[":
+                    expected_closer = "]"
+                else:
+                    expected_closer = "}"
                 balance = 1
-        else: # Inside a block
-            if char == opener: # Nested same opener
+        else:  # Inside a block
+            if char == opener:  # Nested same opener
                 balance += 1
-            elif char == expected_closer: # Corresponding closer
+            elif char == expected_closer:  # Corresponding closer
                 balance -= 1
-                if balance == 0: # End of top-level block
+                if balance == 0:  # End of top-level block
                     blocks.append(text[current_block_start : i + 1])
                     current_block_start = -1
                     expected_closer = None
-                    opener = None # Reset opener
+                    opener = None  # Reset opener
     return [b.strip() for b in blocks]
 
 
@@ -183,13 +186,13 @@ def parse_string_to_hypotheses(h: str) -> MathStatement:
     balance = 0
     main_colon_idx = -1
     for i, char in enumerate(h[start_of_params:], start=start_of_params):
-        if char in '([{':
+        if char in "([{":
             balance += 1
-        elif char in ')]}':
+        elif char in ")]}":
             # Ensure balance doesn't go below 0 due to malformed input
             if balance > 0:
                 balance -= 1
-        elif char == ':' and balance == 0:
+        elif char == ":" and balance == 0:
             main_colon_idx = i
             break
 
@@ -200,9 +203,8 @@ def parse_string_to_hypotheses(h: str) -> MathStatement:
         # Fallback: Use the original string as statement, retain parsed name if available
         return MathStatement(name, [], h[start_of_params:].strip())
 
-
     assumptions_part = h[start_of_params:main_colon_idx].strip()
-    statement = h[main_colon_idx + 1:].strip()
+    statement = h[main_colon_idx + 1 :].strip()
 
     # Now extract top-level assumption blocks from assumptions_part using the helper
     assumptions = extract_top_level_blocks(assumptions_part)
@@ -255,6 +257,10 @@ class ProofSearchState:
         response = client.send(
             prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
         )
+        given_assumptions_as_set = set()
+        for a in self.statement.assumptions:
+            given_assumptions_as_set.add(a)
+        print("given_assumptions_as_set", given_assumptions_as_set)
         hypotheses = []
         lean_blocks = extract_lean_blocks(response)  # Extract all lean blocks first
         if not lean_blocks:
@@ -265,6 +271,14 @@ class ProofSearchState:
         for block_content in lean_blocks:
             # Parse each extracted block content
             statement = parse_string_to_hypotheses(block_content)
+            # filter for assumptions that are not already in the given assumptions
+            assumptions = []
+            for a in statement.assumptions:
+                if a not in given_assumptions_as_set:
+                    assumptions.append(a)
+                    print("added assumption", a)
+            statement.assumptions = assumptions
+
             # Only add if parsing was successful (i.e., name or statement is not empty)
             # The check for statement ensures the fallback case doesn't add empty statements
             if statement.name or statement.statement:
