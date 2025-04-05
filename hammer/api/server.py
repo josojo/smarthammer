@@ -219,15 +219,22 @@ async def get_task_status(task_id: str):
             proven_hypotheses = []
             for h in result.proven_hypotheses:
                 if hasattr(h, "__dict__"):
-                    # If it's an object with attributes, convert to dict
                     proven_hypotheses.append(vars(h))
                 else:
-                    # If it's a simple type, use it as is
                     proven_hypotheses.append(h)
+
+            # Safely convert theoretical_hypotheses to dictionaries
+            theoretical_hypotheses = []
+            for h in result.theoretical_hypotheses:
+                if hasattr(h, "__dict__"):
+                    theoretical_hypotheses.append(vars(h))
+                else:
+                    theoretical_hypotheses.append(h)
 
             result_dict = {
                 "proof": result.proof,
-                "theoretical_hypotheses": result.theoretical_hypotheses,
+                # Use the converted list
+                "theoretical_hypotheses": theoretical_hypotheses,
                 "proven_hypotheses": proven_hypotheses,
                 "name": result.name,
                 "goal": result.goal,
