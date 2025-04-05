@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class Client(AIClient):
     """Client wrapper for OpenAI API interactions."""
 
-    def __init__(self, model: str = "o1-mini"):
+    def __init__(self, model: str = "gemini-2.5-pro-exp-03-25"):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self._name = "GEMINI"
         self.model = model
@@ -31,9 +31,7 @@ class Client(AIClient):
                 f"Sending message to Gemini:\n \033[33m {message} \n \n \033[0m"
             )
 
-        result = self.client.models.generate_content(
-            model="gemini-2.5-pro-exp-03-25", contents=message
-        )
+        result = self.client.models.generate_content(model=self.model, contents=message)
         content = result.candidates[0].content.parts[0].text
         if verbose:
             logger.debug(f"Received response from GEMINI:\n \033[33m {content}\033[0m")

@@ -43,8 +43,8 @@ class SolverLimits(BaseModel):
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
         # AIForHypothesesProof.MOCK,
+        AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.GEMINI_2_PAID,
-        # AIForHypothesesProof.GEMINI_2,
         # AIForHypothesesProof.CLAUDE_37_THINKING,
         # AIForHypothesesProof.GEMINI,
         # AIForHypothesesProof.CLAUDE,
@@ -57,8 +57,8 @@ class SolverLimits(BaseModel):
     ]
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
-        AIForHypothesesProof.GEMINI_2_PAID,
         AIForHypothesesProof.GEMINI_2,
+        AIForHypothesesProof.GEMINI_2_PAID,
         # AIForHypothesesProof.CLAUDE_37_THINKING,
         # # AIForHypothesesProof.OPENAI_O3_mini,
         # AIForHypothesesProof.DEEPSEEK_V3,
@@ -71,9 +71,9 @@ class SolverLimits(BaseModel):
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
+        AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.GEMINI_2_PAID,
         # AIForHypothesesProof.CLAUDE_37_THINKING,
-        AIForHypothesesProof.GEMINI_2,
         # AIForHypothesesProof.DEEPSEEK_R1,
         # AIForHypothesesProof.OPENAI_O3_mini,
         # # AIForHypothesesProof.DEEPSEEK_1_5,
@@ -160,9 +160,9 @@ def return_ai_client(ai_name):
     elif ai_name == AIForHypothesesProof.CLAUDE_37_THINKING:
         return OpenRouterClient("anthropic/claude-3.7-sonnet:thinking")
     elif ai_name == AIForHypothesesProof.GEMINI_2:
-        return OpenRouterClient("google/gemini-2.5-pro-exp-03-25:free")
-    elif ai_name == AIForHypothesesProof.GEMINI_2_PAID:
         return GeminiClient()
+    elif ai_name == AIForHypothesesProof.GEMINI_2_PAID:
+        return GeminiClient("gemini-2.5-pro-preview-03-25")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
         return OpenRouterClient("deepseek/deepseek-r1-zero:free")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_V3:
