@@ -189,7 +189,7 @@ async def create_proof_task(theorem: TheoremRequest):
         },
         job_id=task_id,
         result_ttl=60 * 60 * 24 * 10,  # Store finished jobs for 10 days
-        job_timeout=1800,
+        job_timeout=3600,
         failure_ttl=24 * 3600,  # Keep failed jobs for 24 hours
         meta={
             "enqueued_at": time.time(),
