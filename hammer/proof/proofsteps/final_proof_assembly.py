@@ -3,7 +3,7 @@ from hammer.proof.proof import ProofSearchState
 
 from hammer.api.base_client import AIClient
 from hammer.proof.retry import retry_until_success
-from rq import get_current_job  # type: ignore
+from hammer.proof.utils import get_code_for_simulation
 import logging
 from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
@@ -29,7 +29,11 @@ def iterate_until_valid_final_proof(
             client, starting_code, verbose
         )
         if proof_candidate:
-            code = proof_state.get_theorem_code() + proof_candidate
+            code = get_code_for_simulation(
+                "",
+                proof_state.get_theorem_code(),
+                proof_candidate,
+            )
             result = lean_client.run_code(code, 0, verbose)
             if isinstance(result, dict) and (
                 "messages" not in result

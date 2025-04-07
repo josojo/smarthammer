@@ -1,6 +1,6 @@
 import logging
 from hammer.proof.proofsteps.enriching_with_thm_names import enrich_error_with_moogle
-from hammer.proof.utils import extract_proof_from_text
+from hammer.proof.utils import extract_proof_from_text, get_code_for_simulation
 from hammer.api.moogle.client import Client as MoogleClient
 from hammer.api.base_client import AIClient
 from hammer.lean.server import LeanServer
@@ -99,7 +99,7 @@ def retry_until_success(
             )
         response = api_client.send(prompt, verbose)
         ans_code = extract_proof_from_text(theorem_code, response)[0]
-        code = theorem_code + "\n" + previous_ans_code + ans_code
+        code = get_code_for_simulation("", theorem_code, ans_code)
         result = lean_client.run_code(code, 0, verbose)
         if isinstance(result, dict) and (
             "messages" not in result

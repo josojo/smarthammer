@@ -73,3 +73,9 @@ def extract_proof_from_text(goal_end_code: str, text: str) -> list[str]:
         extract_proof_from_lean_code(goal_end_code, block) for block in cleaned_blocks
     ]
     return proofs
+
+
+def get_code_for_simulation(
+    previous_ans_code: str, theorem_code: str, ans_code: str
+) -> str:
+    return theorem_code + "\n" + previous_ans_code + ans_code

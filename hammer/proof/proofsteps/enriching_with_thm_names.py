@@ -63,9 +63,7 @@ def getMoogleEnrichmentMsg(
     return moogle_response
 
 
-def enrich_error_with_moogle(
-    error_messages, moogle_client, previous_code, theorem_code, ans_code, verbose
-):
+def get_simulation_error_line(error_messages, previous_code, theorem_code, ans_code):
     ### parse the error message for the first line number of the error
     first_error = error_messages[0] if error_messages else None
     if first_error is None:
@@ -80,6 +78,17 @@ def enrich_error_with_moogle(
     line_number = first_error.get("pos", {}).get("line", None)
     ## get the line of the error
     error_line = (theorem_code + ans_code).split("\n")[line_number - 1]
+    return error_line
+
+
+def enrich_error_with_moogle(
+    error_messages, moogle_client, previous_code, theorem_code, ans_code, verbose
+):
+    error_line = get_simulation_error_line(
+        error_messages, previous_code, theorem_code, ans_code
+    )
+    if error_line is None:
+        return None
     ## send the error line to moogle
     moogle_response = moogle_client.send(error_line, verbose)
     output = (

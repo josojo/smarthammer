@@ -4,11 +4,11 @@ from hammer.proof.proof import MathStatement, ProofSearchState
 from hammer.api.base_client import AIClient
 from hammer.api.moogle.client import Client as MoogleClient
 from hammer.proof.proofsteps.enriching_with_thm_names import getMoogleEnrichmentMsg
-from hammer.proof.proofsteps.final_proof_assembly import find_final_proof
 from hammer.proof.retry import retry_until_success
 import logging
 from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
+from hammer.proof.utils import get_code_for_simulation
 
 
 load_dotenv()
@@ -33,7 +33,9 @@ def iterate_until_valid_proof(
             client, hyptotheses_number, starting_code, moogle_helper_info, verbose
         )
         if proof_candidate:
-            code = proof_state.hypothesis_as_code(hyptotheses_number) + proof_candidate
+            code = get_code_for_simulation(
+                "", proof_state.hypothesis_as_code(hyptotheses_number), proof_candidate
+            )
             result = lean_client.run_code(code, 0, verbose)
             if isinstance(result, dict) and (
                 "messages" not in result
