@@ -3,7 +3,6 @@ from hammer.api.base_client import AIClient
 import logging
 from dotenv import load_dotenv  # type: ignore
 from hammer.proof.proof import ProofSearchState
-from hammer.api.moogle.client import Client as MoogleClient
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -28,10 +27,10 @@ def extract_search_blocks(text: str) -> list[str]:
     return blocks
 
 
-def getMoogleEnrichmentMsg(
+def getLibraryEnrichmentMsg(
     proof_state: ProofSearchState,
     ai_client: AIClient,
-    moogle_client: MoogleClient,
+    library_search_client: AIClient,
     hypotheses_number,
     use_keyword_finder=False,
     verbose=False,
@@ -47,7 +46,7 @@ def getMoogleEnrichmentMsg(
         ```
         Please find short search keywords such that the RAG will likely find helpful theroems that help proving the theorem. Put the search keywords as a string into ```search ``` box
         """
-        response = ai_client.send(msg, verbose)
+        response = ai_client.send(msg, verbose=verbose)
     else:
         response = proof_state.hypothesis_as_goal(hypotheses_number)
         response = "```search" + response + "```"
@@ -59,8 +58,8 @@ def getMoogleEnrichmentMsg(
     else:
         search_keywords = search_keywords[0]
     # Send the search keywords to Moogle
-    moogle_response = moogle_client.send(search_keywords, verbose)
-    return moogle_response
+    library_response = library_search_client.send(search_keywords, verbose=verbose)
+    return library_response
 
 
 def get_simulation_error_line(error_messages, previous_code, theorem_code, ans_code):
@@ -82,7 +81,12 @@ def get_simulation_error_line(error_messages, previous_code, theorem_code, ans_c
 
 
 def enrich_error_with_moogle(
-    error_messages, moogle_client, previous_code, theorem_code, ans_code, verbose
+    error_messages,
+    library_search_client,
+    previous_code,
+    theorem_code,
+    ans_code,
+    verbose,
 ):
     error_line = get_simulation_error_line(
         error_messages, previous_code, theorem_code, ans_code
@@ -90,9 +94,9 @@ def enrich_error_with_moogle(
     if error_line is None:
         return None
     ## send the error line to moogle
-    moogle_response = moogle_client.send(error_line, verbose)
+    library_response = library_search_client.send(error_line, verbose=verbose)
     output = (
         "\n Maybe the following defintions and theorems can help you: \n"
-        + moogle_response
+        + library_response
     )
     return output

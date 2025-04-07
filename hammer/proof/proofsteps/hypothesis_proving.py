@@ -3,7 +3,7 @@ from hammer.lean.server import LeanServer
 from hammer.proof.proof import MathStatement, ProofSearchState
 from hammer.api.base_client import AIClient
 from hammer.api.moogle.client import Client as MoogleClient
-from hammer.proof.proofsteps.enriching_with_thm_names import getMoogleEnrichmentMsg
+from hammer.proof.proofsteps.enriching_with_thm_names import getLibraryEnrichmentMsg
 from hammer.proof.retry import retry_until_success
 import logging
 from dotenv import load_dotenv  # type: ignore
@@ -22,7 +22,7 @@ def iterate_until_valid_proof(
     lean_client: LeanServer,
     max_iteration=1,
     max_correction_iteration=1,
-    moogle_client: MoogleClient = None,
+    library_search_client: MoogleClient = None,
     moogle_helper_info="",
     verbose=False,
 ):
@@ -53,7 +53,7 @@ def iterate_until_valid_proof(
                     proof_candidate,
                     result,
                     max_correction_iteration,
-                    moogle_client,
+                    library_search_client,
                     moogle_helper_info,
                     verbose,
                 )
@@ -66,7 +66,7 @@ def iterate_until_valid_proof(
 def prove_theorem_via_hypotheses_search(
     proof_state: ProofSearchState,
     api_client_for_proofing: list[AIClient],
-    moogle_client: MoogleClient,
+    library_search_client: MoogleClient,
     lean_client: LeanServer,
     max_iteration_hypotheses_proof=1,
     max_correction_iteration_hypotheses_proof=1,
@@ -83,9 +83,9 @@ def prove_theorem_via_hypotheses_search(
         logger.debug(f"Searching proof for hypothesis {i}")
         for api_client in api_client_for_proofing:
             moogle_helper_info = ""
-            if moogle_client:
-                moogle_output = getMoogleEnrichmentMsg(
-                    proof_state, api_client, moogle_client, i, False, verbose
+            if library_search_client:
+                moogle_output = getLibraryEnrichmentMsg(
+                    proof_state, api_client, library_search_client, i, False, verbose
                 )
                 moogle_helper_info = (
                     "\n\n Consider using the following lean4 defintions as a helper to find the proof: \n "
@@ -99,7 +99,7 @@ def prove_theorem_via_hypotheses_search(
                     lean_client,
                     max_iteration_hypotheses_proof,
                     max_correction_iteration_hypotheses_proof,
-                    moogle_client,
+                    library_search_client,
                     moogle_helper_info,
                     verbose,
                 )

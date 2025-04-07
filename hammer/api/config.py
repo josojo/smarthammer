@@ -7,7 +7,7 @@ from hammer.api.deepseek.client import Client as DeepSeekClient
 from hammer.api.openai.client import Client as OpenAIClient
 from hammer.api.mock.mock_client import Client as MockClient
 from hammer.api.gemini.client import Client as GeminiClient
-from hammer.api.moogle.client import Client as MoogleClient
+from hammer.api.lean_search.client import Client as LeanSearchClient
 from hammer.lean.cache import LeanServerCache
 
 api_output_1 = """
@@ -206,7 +206,7 @@ def get_solver_configs(kwargs) -> dict:
     lean_cache = LeanServerCache.get_instance()
     config["lean_client"] = lean_cache.get_server(kwargs["code_env"])
     # Initialize moogle client
-    config["moogle_client"] = MoogleClient()
+    config["library_search_client"] = LeanSearchClient()
 
     # Initialize AI clients
     config["api_client_for_hypothesis_search"] = return_ai_client(

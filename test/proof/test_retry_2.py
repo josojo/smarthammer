@@ -24,7 +24,7 @@ def test_retry_until_success_with_error_line():
     # Initialize clients
     lean_client = LeanServer()
     api_client = MockAPIClient()
-    moogle_client = MockMoogleClient()
+    library_search_client = MockMoogleClient()
 
     # Setup a theorem that will fail with a specific error line
     previous_code = "import Mathlib"
@@ -49,13 +49,13 @@ def test_retry_until_success_with_error_line():
         ans_code=initial_proof,
         result=lean_client.run_code(theorem_code + initial_proof),
         max_correction_iteration=2,
-        moogle_client=moogle_client,
+        library_search_client=library_search_client,
         verbose=True,
     )
 
     # Verify that the error line was sent to Moogle
     assert (
-        moogle_client.last_query
+        library_search_client.last_query
         == "  have h : n ≠ n := by cauchySchwarz  -- # This line will cause an error"
     ), "Moogle client should receive the error line"
 
@@ -70,7 +70,7 @@ def test_retry_until_success_with_hypothesis_error():
     # Initialize clients
     lean_client = LeanServer()
     api_client = MockAPIClient()
-    moogle_client = MockMoogleClient()
+    library_search_client = MockMoogleClient()
 
     # Setup a theorem where error occurs in hypothesis
     previous_code = "import Mathlib"
@@ -95,6 +95,6 @@ def test_retry_until_success_with_hypothesis_error():
                 )
             ),
             max_correction_iteration=2,
-            moogle_client=moogle_client,
+            library_search_client=library_search_client,
             verbose=True,
         )

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def iterate_until_valid_final_proof(
     proof_state: ProofSearchState,
     client: AIClient,
-    moogle_client: MoogleClient,
+    library_search_client: MoogleClient,
     lean_client: LeanServer,
     max_iteration=1,
     max_correction_iteration=1,
@@ -52,7 +52,7 @@ def iterate_until_valid_final_proof(
                         proof_candidate,
                         result,
                         max_correction_iteration,
-                        moogle_client,
+                        library_search_client,
                         moogle_helper_info="",
                         verbose=verbose,
                     )
@@ -72,7 +72,7 @@ def iterate_until_valid_final_proof(
 def find_final_proof(
     proof_state: ProofSearchState,
     api_client: AIClient,
-    moogle_client: MoogleClient,
+    library_search_client: MoogleClient,
     lean_client,
     max_iteration_final_proof=1,
     max_iternation_correction_proof=1,
@@ -81,7 +81,7 @@ def find_final_proof(
     proof = iterate_until_valid_final_proof(
         proof_state,
         api_client,
-        moogle_client,
+        library_search_client,
         lean_client,
         max_iteration_final_proof,
         max_iternation_correction_proof,

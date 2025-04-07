@@ -50,7 +50,7 @@ def retry_until_success(
     ans_code,
     result,
     max_correction_iteration=1,
-    moogle_client: MoogleClient = None,
+    library_search_client: MoogleClient = None,
     moogle_helper_info="",
     verbose=False,
 ):
@@ -83,10 +83,10 @@ def retry_until_success(
             )
         else:
             moogle_info = moogle_helper_info
-            if moogle_client is not None:
+            if library_search_client is not None:
                 moogle_helper_for_error = enrich_error_with_moogle(
                     error_messages,
-                    moogle_client,
+                    library_search_client,
                     previous_code,
                     theorem_code,
                     ans_code,
