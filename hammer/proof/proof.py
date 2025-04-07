@@ -74,7 +74,7 @@ class MathStatement:
         # Format each assumption as (assumption) and join with ' → '
         if self.assumptions:
             formatted_assumptions = [f"({a.strip()})" for a in self.assumptions]
-            assumptions_str = " " + " → ".join(formatted_assumptions)
+            assumptions_str = " " + " → ".join(formatted_assumptions) + " → "
         else:
             assumptions_str = ""
 
@@ -84,7 +84,7 @@ class MathStatement:
 
         # Combine name, formatted assumptions, colon, and statement
         # Ensure correct spacing when assumptions are present or absent
-        return f"({name_str}{assumptions_str}{colon_str}{self.statement})"
+        return f"({name_str}{colon_str}{assumptions_str}{self.statement})"
 
     def __repr__(self):
         """Representation for debugging."""
