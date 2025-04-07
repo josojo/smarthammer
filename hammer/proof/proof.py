@@ -71,16 +71,20 @@ class MathStatement:
 
     def __str__(self):
         """Convert statement to string format."""
-        # Ensure assumptions are joined correctly even if empty
-        assumptions_str = (" " + " ".join(self.assumptions)) if self.assumptions else ""
+        # Format each assumption as (assumption) and join with ' → '
+        if self.assumptions:
+            formatted_assumptions = [f"({a.strip()})" for a in self.assumptions]
+            assumptions_str = " " + " → ".join(formatted_assumptions)
+        else:
+            assumptions_str = ""
+
         # Handle potential empty name in fallback case
         name_str = self.name if self.name else ""
         colon_str = ": " if self.statement else ""  # Add colon only if statement exists
-        # Added check to prevent adding space after name if no assumptions exist
-        if assumptions_str:
-            return f"({name_str}{assumptions_str}{colon_str}{self.statement})"
-        else:
-            return f"({name_str}{colon_str}{self.statement})"
+
+        # Combine name, formatted assumptions, colon, and statement
+        # Ensure correct spacing when assumptions are present or absent
+        return f"({name_str}{assumptions_str}{colon_str}{self.statement})"
 
     def __repr__(self):
         """Representation for debugging."""
