@@ -118,14 +118,14 @@ def remove_lean_comments(h: str) -> str:
         end_idx = h.find("-/", start_idx)
         if end_idx == -1:
             break  # No closing comment found
-        
+
         # Find the start of the line containing the multi-line comment
         line_start = h.rfind("\n", 0, start_idx) + 1
         # Find the end of the line containing the end of the multi-line comment
         line_end = h.find("\n", end_idx)
         if line_end == -1:
             line_end = len(h)
-        
+
         # Remove the multi-line comment while preserving surrounding whitespace
         before = h[:line_start]
         after = h[line_end:]
@@ -142,7 +142,7 @@ def remove_lean_comments(h: str) -> str:
                 comment_start = line.find("--")
                 line = line[:comment_start].rstrip()
             non_comment_lines.append(line)
-    
+
     # Join lines and clean up any double newlines
     result = "\n".join(non_comment_lines)
     while "\n\n\n" in result:

@@ -4,6 +4,7 @@ from hammer.proof.utils import extract_proof_from_text
 from hammer.proof.proof import parse_string_to_hypotheses, MathStatement
 from hammer.proof.proof import remove_lean_comments
 
+
 class TestUnicodeEscape(unittest.TestCase):
     def test_ascii_characters(self):
         # Test with basic ASCII characters
@@ -273,7 +274,7 @@ class TestRemoveLeanComments(unittest.TestCase):
 
   ·
     rw [hd]
-    simp"""
+    simp""",
             },
             {
                 "input": """-- This is a single line comment
@@ -284,7 +285,7 @@ theorem test
   sorry""",
                 "expected": """theorem test
 
-  sorry"""
+  sorry""",
             },
             {
                 "input": """theorem test
@@ -296,7 +297,7 @@ theorem test
                 "expected": """theorem test
   sorry
 
-  · rw [hd]"""
+  · rw [hd]""",
             },
             {
                 "input": """theorem test
@@ -308,7 +309,7 @@ theorem test
 
   sorry
 
-  · rw [hd]"""
+  · rw [hd]""",
             },
             {
                 "input": """theorem test
@@ -318,17 +319,17 @@ theorem test
   · rw [hd]""",
                 "expected": """theorem test
   sorry
-  · rw [hd]"""
-            }
+  · rw [hd]""",
+            },
         ]
 
         for i, test_case in enumerate(test_cases):
             with self.subTest(i=i):
                 result = remove_lean_comments(test_case["input"])
                 self.assertEqual(
-                    result, 
+                    result,
                     test_case["expected"],
-                    f"Test case {i+1} failed:\nExpected:\n{test_case['expected']}\nGot:\n{result}"
+                    f"Test case {i+1} failed:\nExpected:\n{test_case['expected']}\nGot:\n{result}",
                 )
 
 
