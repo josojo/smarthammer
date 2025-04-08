@@ -2,7 +2,7 @@ import unittest
 from hammer.proof.utils import unicode_escape
 from hammer.proof.utils import extract_proof_from_text
 from hammer.proof.proof import parse_string_to_hypotheses, MathStatement
-
+from hammer.proof.proof import remove_lean_comments
 
 class TestUnicodeEscape(unittest.TestCase):
     def test_ascii_characters(self):
@@ -253,6 +253,83 @@ class TestParseStringToHypotheses(unittest.TestCase):
         self.assertEqual(result.name, expected.name)
         self.assertEqual(result.assumptions, expected.assumptions)
         self.assertEqual(result.statement, expected.statement)
+
+
+class TestRemoveLeanComments(unittest.TestCase):
+    def test_remove_lean_comments(self):
+        """Test cases for remove_lean_comments function."""
+        test_cases = [
+            {
+                "input": """theorem test
+  sorry
+  /- If n = 0, the hypotheses imply baps = 0 (from h2). The hypotheses hold for any daps.
+     The conclusion requires 0 = 40 * daps, which implies daps = 0.
+     The theorem fails for n=0, daps ≠ 0. -/
+  · -- Subcase daps = 0: Goal is 0 = 40 * 0.
+    rw [hd] -- substitute daps = 0 into the goal 0 = 40 * daps
+    simp -- 0 = 0, which is true.""",
+                "expected": """theorem test
+  sorry
+
+  ·
+    rw [hd]
+    simp"""
+            },
+            {
+                "input": """-- This is a single line comment
+theorem test
+  /- This is a
+     multi-line
+     comment -/
+  sorry""",
+                "expected": """theorem test
+
+  sorry"""
+            },
+            {
+                "input": """theorem test
+  -- Single line comment
+  sorry
+  /- Multi-line
+     comment -/
+  · rw [hd]""",
+                "expected": """theorem test
+  sorry
+
+  · rw [hd]"""
+            },
+            {
+                "input": """theorem test
+  /- First multi-line comment -/
+  sorry
+  /- Second multi-line comment -/
+  · rw [hd]""",
+                "expected": """theorem test
+
+  sorry
+
+  · rw [hd]"""
+            },
+            {
+                "input": """theorem test
+  -- Single line comment
+  sorry
+  -- Another single line comment
+  · rw [hd]""",
+                "expected": """theorem test
+  sorry
+  · rw [hd]"""
+            }
+        ]
+
+        for i, test_case in enumerate(test_cases):
+            with self.subTest(i=i):
+                result = remove_lean_comments(test_case["input"])
+                self.assertEqual(
+                    result, 
+                    test_case["expected"],
+                    f"Test case {i+1} failed:\nExpected:\n{test_case['expected']}\nGot:\n{result}"
+                )
 
 
 if __name__ == "__main__":

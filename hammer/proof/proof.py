@@ -103,7 +103,8 @@ class MathStatement:
 
 def remove_lean_comments(h: str) -> str:
     """
-    Removes lines that start with -- (Lean comments) from the input string.
+    Removes both single-line comments (starting with --) and multi-line comments
+    (enclosed in /- and -/) from the input string.
 
     Args:
         h: Input string potentially containing Lean comments
@@ -111,10 +112,42 @@ def remove_lean_comments(h: str) -> str:
     Returns:
         String with Lean comment lines removed
     """
-    # Split into lines and filter out comment lines
+    # First handle multi-line comments
+    while "/-" in h and "-/" in h:
+        start_idx = h.find("/-")
+        end_idx = h.find("-/", start_idx)
+        if end_idx == -1:
+            break  # No closing comment found
+        
+        # Find the start of the line containing the multi-line comment
+        line_start = h.rfind("\n", 0, start_idx) + 1
+        # Find the end of the line containing the end of the multi-line comment
+        line_end = h.find("\n", end_idx)
+        if line_end == -1:
+            line_end = len(h)
+        
+        # Remove the multi-line comment while preserving surrounding whitespace
+        before = h[:line_start]
+        after = h[line_end:]
+        h = before + after
+
+    # Then handle single-line comments
     lines = h.split("\n")
-    non_comment_lines = [line for line in lines if not line.strip().startswith("--")]
-    return "\n".join(non_comment_lines)
+    non_comment_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped.startswith("--"):
+            # Remove any trailing comments from the line while preserving indentation
+            if "--" in line:
+                comment_start = line.find("--")
+                line = line[:comment_start].rstrip()
+            non_comment_lines.append(line)
+    
+    # Join lines and clean up any double newlines
+    result = "\n".join(non_comment_lines)
+    while "\n\n\n" in result:
+        result = result.replace("\n\n\n", "\n\n")
+    return result
 
 
 def extract_top_level_blocks(text: str) -> list[str]:
