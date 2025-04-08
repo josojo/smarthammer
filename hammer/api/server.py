@@ -139,6 +139,7 @@ class TheoremRequest(BaseModel):
     max_correction_iteration_final_proof: int = 1
     verbose: bool = True
     code_for_env_0: str | None = "import Mathlib"
+    number_of_proving_cycles: int = 1
 
 
 class TaskStatus(BaseModel):
@@ -184,6 +185,7 @@ async def create_proof_task(theorem: TheoremRequest):
             "ai_for_hypotheses_generation": theorem.ai_for_hypotheses_generation,
             "ai_for_hypotheses_proof": theorem.ai_for_hypotheses_proof,
             "ai_for_final_proof": theorem.ai_for_final_proof,
+            "number_of_proving_cycles": 1,
             "verbose": theorem.verbose,
             "task_id": task_id,
         },

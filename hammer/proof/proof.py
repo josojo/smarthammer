@@ -73,7 +73,7 @@ class MathStatement:
         """Convert statement to string format."""
         # Format each assumption as (assumption) and join with ' → '
         if self.assumptions:
-            formatted_assumptions = [f"({a.strip()})" for a in self.assumptions]
+            formatted_assumptions = [f"{a.strip()}" for a in self.assumptions]
             assumptions_str = " " + " → ".join(formatted_assumptions) + " → "
         else:
             assumptions_str = ""
@@ -244,6 +244,17 @@ class ProofSearchState:
         )
         prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.statement.assumptions) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
         prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name as in the following examples."
+        prompt_known_hypotheses = ""
+        if len(self.theoretical_hypotheses) > 0:
+            prompt_known_hypotheses = (
+                "THe following lemmas are already known, and you don't have to list them anymore. Only list additions ones: \n"
+                + "\n".join(
+                    [
+                        f"```lean\nlemma {hypothesis.name} : {hypothesis.statement}```"
+                        for hypothesis in self.theoretical_hypotheses
+                    ]
+                )
+            )
         examples = f"""Examples:
         Example 1:
         Input: {prompt_part_1} ```lean theorem mathd_numbertheory_457_1 (n : ℕ)(h₁ : 80325∣ (n !) ) : 17 ≤ n ```. {prompt_part_3}
@@ -259,7 +270,12 @@ class ProofSearchState:
            Lean4 hypotheses:  \n```lean\n lemma lem1 : ∀ n, f (f (n + 1)) = f (0) + 2 * f (n+1) ```, \n```lean\n lemma lem2 : ∀ n, f (f (n + 1)) = f (2) + 2 * f (n)```, \n```lean\n lemma lem3 : ∀ b, f (b + 1) - f (b) = (f 2 - f 0) / 2 ```, \n```lean\n lemma lem4 : ∀ b, f (b) = (f 2 - f 0) / 2 *b + f 0 ```.
         """
         response = client.send(
-            prompt_part_1 + prompt_part_2 + prompt_part_3 + examples, verbose
+            prompt_part_1
+            + prompt_part_2
+            + prompt_part_3
+            + examples
+            + prompt_known_hypotheses,
+            verbose,
         )
         given_assumptions_as_set = set()
         for a in self.statement.assumptions:
@@ -267,7 +283,7 @@ class ProofSearchState:
         print("given_assumptions_as_set", given_assumptions_as_set)
         hypotheses = []
         lean_blocks = extract_lean_blocks(response)  # Extract all lean blocks first
-        if not lean_blocks:
+        if not lean_blocks and len(self.theoretical_hypotheses) == 0:
             logger.warning(f"No Lean blocks extracted from response: {response}")
             # Maintain original behavior of raising exception if no blocks found
             raise Exception("No hypotheses extracted (no Lean blocks found)")
@@ -293,7 +309,7 @@ class ProofSearchState:
                     f"Failed to parse a valid statement or name from block: '{block_content[:100]}...'"
                 )
 
-        if len(hypotheses) == 0:
+        if len(hypotheses) == 0 and len(self.theoretical_hypotheses) == 0:
             # This check is now more robust, failing only if *no valid* statements were parsed from the blocks found
             raise Exception("No valid hypotheses extracted from the found Lean blocks")
         self.theoretical_hypotheses.extend(hypotheses)

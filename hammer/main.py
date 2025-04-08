@@ -58,42 +58,47 @@ def prove_theorem(**kwargs):
             config["name"], config["hypotheses"], config["code_env_0"], config["goal"]
         )
 
-        log_handler.set_step("Adding Hypotheses")
-        find_hypotheses(
-            proof_state,
-            config["api_client_for_hypothesis_search"],
-            verbose=config["verbose"],
-            log_handler=log_handler,
-        )
+        for i in range(config["number_of_proving_cycles"]):
 
-        log_handler.set_step("Checking Hypotheses Validity")
-        check_hypotheses_validity(
-            proof_state,
-            config["lean_client"],
-            verbose=config["verbose"],
-        )
+            log_handler.set_step(f"Adding Hypotheses round {i}")
+            find_hypotheses(
+                proof_state,
+                config["api_client_for_hypothesis_search"],
+                verbose=config["verbose"],
+                log_handler=log_handler,
+            )
 
-        prove_theorem_via_hypotheses_search(
-            proof_state,
-            config["hypothesis_proof_client"],
-            config["library_search_client"],
-            config["lean_client"],
-            config["max_iteration_hypotheses_proof"],
-            config["max_correction_iteration_hypotheses_proof"],
-            verbose=config["verbose"],
-            log_handler=log_handler,
-        )
+            log_handler.set_step(f"Checking Hypotheses Validity round {i}")
+            check_hypotheses_validity(
+                proof_state,
+                config["lean_client"],
+                verbose=config["verbose"],
+            )
 
-        log_handler.set_step("Building Final Proof")
-        find_final_proof(
-            proof_state,
-            config["final_proof_client"],  # Use the selected final proof client'],
-            config["library_search_client"],
-            config["lean_client"],
-            config["max_iteration_final_proof"],
-            config["max_correction_iteration_final_proof"],
-            config["verbose"],
-        )
+            prove_theorem_via_hypotheses_search(
+                proof_state,
+                config["hypothesis_proof_client"],
+                config["library_search_client"],
+                config["lean_client"],
+                config["max_iteration_hypotheses_proof"],
+                config["max_correction_iteration_hypotheses_proof"],
+                verbose=config["verbose"],
+                log_handler=log_handler,
+            )
+
+            log_handler.set_step(f"Building Final Proof round {i}")
+            find_final_proof(
+                proof_state,
+                config["final_proof_client"],  # Use the selected final proof client'],
+                config["library_search_client"],
+                config["lean_client"],
+                config["max_iteration_final_proof"],
+                config["max_correction_iteration_final_proof"],
+                config["verbose"],
+            )
+            if proof_state.proof:
+                logger.debug(f"Proof found for theorem {proof_state.name}")
+                break
 
         return proof_state
 

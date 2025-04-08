@@ -8,6 +8,7 @@ class AIForHypothesesProof(Enum):
     DEEPSEEK_1_5 = "DeepSeekProver1.5"
     GEMINI = "Gemini-Flash-Thinking-2.0"
     GEMINI_2 = "Gemini-Flash-Thinking-2.5-free"
+    GEMINI_20 = "Gemini-Flash-Thinking-2.0"
     GEMINI_2_PAID = "Gemini-Flash-Thinking-2.5-paid"
     CLAUDE_37_THINKING = "Claude-3.7-Thinking"
     DEEPSEEK_R1 = "DeepSeekR1"

@@ -39,6 +39,7 @@ class SolverLimits(BaseModel):
     max_correction_iteration_hypotheses_proof: int = 6
     max_iteration_final_proof: int = 6
     max_correction_iteration_final_proof: int = 6
+    max_number_of_proving_cycles: int = 3
 
     # Allowed AI configurations
     allowed_hypothesis_generation_models: List[AIForHypothesesProof] = [
@@ -57,6 +58,7 @@ class SolverLimits(BaseModel):
     ]
 
     allowed_hypothesis_proof_models: List[AIForHypothesesProof] = [
+        # AIForHypothesesProof.GEMINI_20,
         AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.GEMINI_2_PAID,
         # AIForHypothesesProof.CLAUDE_37_THINKING,
@@ -71,6 +73,7 @@ class SolverLimits(BaseModel):
     ]
 
     allowed_final_proof_models: List[AIForHypothesesProof] = [
+        # AIForHypothesesProof.GEMINI_20,
         AIForHypothesesProof.GEMINI_2,
         AIForHypothesesProof.GEMINI_2_PAID,
         # AIForHypothesesProof.CLAUDE_37_THINKING,
@@ -144,6 +147,14 @@ def validate_inputs(kwargs, logger):
             f"Invalid AI model for final proof. Allowed models: {SOLVER_LIMITS.allowed_final_proof_models}"
         )
 
+    if (
+        kwargs.get("number_of_proving_cycles")
+        > SOLVER_LIMITS.max_number_of_proving_cycles
+    ):
+        raise ValueError(
+            f"Invalid AI model for number_of_proving_cycles. Allowed max number: {SOLVER_LIMITS.max_number_of_proving_cycles}"
+        )
+
     # Special warning for mocked models
     if kwargs.get("ai_for_hypotheses_generation") in [AIForHypothesesProof.OPENAI_O1]:
         logger.warning("o1 is currently only mocked.")
@@ -163,6 +174,8 @@ def return_ai_client(ai_name):
         return GeminiClient()
     elif ai_name == AIForHypothesesProof.GEMINI_2_PAID:
         return GeminiClient("gemini-2.5-pro-preview-03-25")
+    elif ai_name == AIForHypothesesProof.GEMINI_20:
+        return GeminiClient("gemini-2.0-flash")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_R1:
         return OpenRouterClient("deepseek/deepseek-r1-zero:free")
     elif ai_name == AIForHypothesesProof.DEEPSEEK_V3:
@@ -200,6 +213,7 @@ def get_solver_configs(kwargs) -> dict:
             "max_correction_iteration_final_proof"
         ],
         "verbose": kwargs["verbose"],
+        "number_of_proving_cycles": kwargs["number_of_proving_cycles"],
     }
 
     # Get LeanServer from cache
