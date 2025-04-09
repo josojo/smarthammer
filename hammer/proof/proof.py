@@ -276,7 +276,7 @@ class ProofSearchState:
             f"You are a math expert and you want to proof the following lean theorem:\n"
         )
         prompt_part_2 = f"```lean\n theorem {self.name} {' '.join(self.statement.assumptions) + ' '.join(map(str, self.proven_hypotheses))} : \n {self.goal} ```."
-        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name as in the following examples."
+        prompt_part_3 = "Using chain of thought formulate a proof of the theorem in natural language and then extract the critical intermediate steps and formulate them as lean4 hypothesis. Put each hypothesis into a new ```lean ``` block. Each hypothesis should start with `lemma`, then the lemma name as in the following examples. Don't provide proofs for the hypotheses, just the statements. \n"
         prompt_known_hypotheses = ""
         if len(self.theoretical_hypotheses) > 0:
             prompt_known_hypotheses = (
