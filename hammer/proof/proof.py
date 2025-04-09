@@ -190,7 +190,7 @@ def parse_string_to_hypotheses(h: str) -> MathStatement:
     """
     Parses a string (potentially containing a lemma or theorem)
     to create a MathStatement object representing the core statement.
-    Recognizes 'lemma', 'theorem', 'lem', or 'lem<number>' as starting keywords.
+    Recognizes 'lemma', 'lem', or 'lem<number>' as starting keywords.
     Finds the main colon separating the head (name, params) from the body (statement),
     correctly handling nested brackets/braces/parentheses in parameters.
     Extracts top-level parenthesized (...), bracketed [...], and curly-braced {...}
@@ -208,7 +208,7 @@ def parse_string_to_hypotheses(h: str) -> MathStatement:
 
     # Match keyword and name first
     # Allows 'lem' or 'lem' followed by digits. Name stops at whitespace or brackets/colon.
-    head_match = re.match(r"^\s*(lemma|theorem|lem\d*)\s+([^\s\(:\{\[\}\]]+)", h)
+    head_match = re.match(r"^\s*(lemma|lem\d*)\s+([^\s\(:\{\[\}\]]+)", h)
     if not head_match:
         logger.warning(
             f"Could not parse keyword/name from: '{h[:100]}...'. Treating as simple statement."
